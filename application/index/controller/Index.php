@@ -9,7 +9,7 @@ use think\View;
 use think\db\Connection;
 
 /**
- * @name    登录页123
+ * @name    登录页
  * Class Index
  * @package app\index\controller
  */
