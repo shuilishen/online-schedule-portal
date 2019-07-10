@@ -1,0 +1,77 @@
+
+    <div class="layui-card">
+
+        <div class="layui-card-header">编辑{$group}权限</div>
+
+        <div class="layui-card-body">
+            <form class="layui-form" method="post" id="save"  lay-filter="au_index">
+                <input type="hidden" name="treedata" value="" class="treedata">
+                <div id="test1"></div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+    </div>
+
+    <script>
+        var treedata={$treedata|raw};
+        var pagejs = function() {
+
+            layui.tree.render({
+                elem: '#test1'  //绑定元素
+                ,showCheckbox: 'true'
+                ,accordion: 'true'
+                ,data: treedata
+                ,id:'au_index'
+            });
+
+            layui.form.on('submit(au_index)', function(){
+                var checkdata = layui.tree.getChecked('au_index');
+                if(checkdata.length>0){
+                       layui.form.val('au_index',{
+
+                           'treedata':myGetChildrenIds(checkdata).join(',')
+                       });
+                   }else{
+                       layui.form.val('au_index',{
+                           'treedata':''
+                       });
+                   }
+            });
+
+        }
+
+        function getChildrenIds(rows) {
+            var arr=[];
+            var x;
+            for (x in rows){
+                if(rows[x].hasOwnProperty('children') && rows[x].children.length>0){
+                    arr=arr.concat(getChildrenIds(rows[x].children))
+                }else{
+                    arr.push(rows[x].id);
+                }
+            }
+            return arr;
+        }
+        //todo rewrite this function
+
+        function myGetChildrenIds(rows) {
+            var arr = [];
+            var i;
+            for(i in rows)
+                if(rows[i].hasOwnProperty('children') && rows[i].children.length>0)
+                    arr=arr.concat(myGetChildrenIds(rows[i].children));
+                else
+                    arr.push(rows[i].id);
+            return arr;
+        }
+
+
+
+    </script>

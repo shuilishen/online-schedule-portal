@@ -1,0 +1,215 @@
+<div class="section" >
+    <div class="layui-card">
+
+        <div class="layui-card-header">管理日历</div>
+        <div class="layui-card-body">
+
+            <div class="layui-row layui-col-space5">
+                <div class="layui-col-md12">
+                    <div class="layui-tab" lay-filter = "calendars">
+                        <ul class="layui-tab-title">
+                            {volist name="calendars" id="vo"}
+                            <li id="{$vo.id}" {if $vo.active == true}class="layui-this"{/if}>{$vo.title}</li>
+                            {/volist}
+                        </ul>
+                    </div>
+
+
+                </div>
+
+                <div class="layui-col-md4">
+                    <div class="layui-row">
+                        <div class="layui-col-md12 ">
+                            <a type="button" class="layui-btn my-tab" data-title="新建" data-url='/index/Calendar/add/cid/1' id="add">
+                                <i class="layui-icon">&#xe608;</i> 新建
+                            </a>
+                        </div>
+                        <div class="layui-col-md12 ">
+                            <table id="vacation" lay-filter="table"></table>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div class="layui-col-md8">
+                    <div class="layui-row">
+                        <div class="layui-col-md10  ">
+                            <div id = "calendar-container">
+                                <div id="calendar"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<style>
+    .vacation-1{
+        background:#FF00FF;
+    }
+    .vacation-2{
+        background:#00FF00;
+    }
+
+    .vacation-3{
+        background:#66CCFF;
+    }
+    .vacation-4{
+        background:#8fdf82;
+    }
+</style>
+
+<script type="text/html" id="toolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    var cv1 = [];
+    var cv2 = {$calendarOV|raw};
+    var cv3 = {$calendarCV|raw};
+
+    var vt1 = [];
+    var vt2 = {$tableOV|raw};
+    var vt3 = {$tableCV|raw};
+
+    var vacations = cv1;
+    var vtable = vt1;
+    var vtypes = {{$vtypes|raw}};
+
+
+    var calendarEl = document.getElementById('calendar');
+    var containerEl = document.getElementById('calendar-container');
+
+    var pagejs = function() {
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            plugins: ['dayGrid'],
+            draggable: true,
+            editable: true,
+            timeZone: 'UTC',
+            height: 500,
+            dayRender:function (dayRenderInfo ) {
+                var datestring = dayRenderInfo.date.getFullYear()+'-'+(dayRenderInfo.date.getMonth()+1)+'-'+dayRenderInfo.date.getDate();
+                var el = $(dayRenderInfo.el);
+                if(undefined !== vacations[datestring]){
+                    el.addClass('vacation-'+vacations[datestring].type);
+                    var va = $('<h3></h3>').html(vacations[datestring].title);
+                    el.append(va);
+                }
+                return el;
+            }
+        });
+
+        var table = layui.table;
+        table.render({
+            elem: '#vacation'
+            ,page: true //开启分页
+            ,cols: [[ //表头
+                {field: 'title', title: '名称', sort: true, fixed: 'left'}
+                ,{field: 'vtype', title: '类型', sort: true, templet: function(a){
+                        if(undefined !== vtypes[a.vtype])
+                            return vtypes[a.vtype];
+                        else
+                            return a.vtype;
+                    }}
+                ,{field: 'dates', title: '日期', sort: true}
+                ,{field: 'opt', title: '操作', toolbar:'#toolbar', fixed: 'right'}
+            ]]
+            ,data: vtable
+        });
+
+        table.on('tool(table)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+            if(layEvent === 'del'){ //删除
+                layer.confirm('真的删除行么', function(index){
+                    location.href='/index/Calendar/del/id/'+data.id;
+                });
+            } else if(layEvent === 'edit'){ //编辑
+                //do something
+                location.href='/index/Calendar/edit/id/'+data.id;
+            }
+        });
+
+        layui.element.on('tab(calendars)', function(data){
+            switch (data.index){
+                case 0:
+                    vtable = vt1;
+                    vacations = cv1;
+                    break;
+                case 1:
+                    vtable = vt2;
+                    vacations = cv2;
+                    break;
+                case 2:
+                    vtable = vt3;
+                    vacations = cv3;
+                    break;
+            }
+            layui.$('#add').data('url','/index/Calendar/add/cid/'+this['id']).data('title','新建');
+
+            table.reload('vacation', {
+                data: vtable
+            });
+            calendar.render();
+            calendar.updateSize();
+        });
+
+        calendar.render();
+
+        layui.$(document).on('click','#add',function(data){
+            console.log(addurl);
+            layui.$.get(addurl,function (html) {
+                layui.layer.open({
+                    type: 1,
+                    skin: 'layui-layer-lan',
+                    offset: 'auto',
+                    title: '新建',
+                    btn: ['确定', '取消'],
+                    yes: function(index, layero) {
+                        console.log(index);
+                        console.log(layero);
+
+                        table.reload('vacation', {
+                            data: vtable
+                        });
+                        calendar.render();
+                        calendar.updateSize();
+                    },
+                    btn2: function(index, layero){
+
+                    },
+                    content: html
+                });
+            });
+        });
+
+        // layui.$(document).ready(function () {
+        //     layui.$('#add').click(function (data) {
+        //
+        //         console.log(data);
+        //
+        //         var layer = layui.layer;
+        //         layer.open({
+        //             type: 1,
+        //             skin: 'layui-layer-lan',
+        //             offset: 'auto',
+        //             title: '新建',
+        //             btn: ['确定', '取消'],
+        //             content: '传入任意的文本或html' //这里content是一个普通的String
+        //         });
+        //
+        //
+        //     })
+        // })
+    }
+
+</script>

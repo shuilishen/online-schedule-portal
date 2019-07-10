@@ -1,0 +1,122 @@
+<div class="area area1">
+    <table >
+        <tr>
+            <td class="bar-name">岗位名称：</td>
+            <td >
+                <form action="#" method="post">
+                    <select>
+                        <option value= 0 >请选择</option>
+                        {volist name="org1" id="vo1"}
+                        <option value="{$vo1.Org_C}">{$vo1.Org_N}</option>
+                        {/volist}
+
+                    </select>
+                </form>
+
+
+            </td>
+        </tr>
+        <tr>
+            <td class="bar-name">班别名称：</td>
+            <td >
+                <select class="selection">
+                    <option value= 0 >请选择</option>
+                    {volist name="org2" id="vo2"}
+                    <option value="{$vo2.SC}" >{$vo2.SN}</option>
+                    {/volist}
+                </select>
+            </td>
+
+            <td>
+                <input class="btn" type="submit" value="创建新的类别" />
+            </td>
+        </tr>
+    </table>
+
+    <div>
+        <br>
+    </div>
+    <hr style="clear:both">
+</div>
+
+<div class="area area2">
+    <table >
+        <tr>
+            <td>上班规则细节： </td>
+        </tr>
+
+        <tr>
+            <td class="bar-name">使用日历： </td>
+            <td >
+                <select class="selection">
+                    <option value="no-vacation">全年无休</option>
+                </select>
+            </td>
+
+            <td class="bar-name">上班规则： </td>
+            <td>DAY1</td>
+            <td>DAY2</td>
+            <td>DAY3</td>
+            <td>DAY4</td>
+            <td>DAY5</td>
+            <td>DAY6</td>
+            <td>DAY7</td>
+
+        </tr>
+
+        <tr>
+            <td class="bar-name">班别代码： </td>
+            <td >
+                <input class="input-bar" name="num" value="000-099">
+            </td>
+            <td>dummy</td>
+            <td>work</td>
+            <td>work</td>
+            <td>work</td>
+            <td>work</td>
+            <td>work</td>
+            <td>work</td>
+            <td>work</td>
+        </tr>
+            <tr>
+                <td>上班时间： </td>
+                <td>09:00</td>
+                <td>下班时间： </td>
+                <td>17:00</td>
+            </tr>
+
+            <tr>
+                <td>岗位人员名单： </td>
+            </tr>
+        </table>
+    </div>
+<div class="area area3">
+    <div id="test1"></div>
+    <!--<table id="demo" lay-filter="test"></table></div> -->
+
+<script>
+    var pagejs = function() {
+        layui.use('table', function(){
+            var table = layui.table;
+
+            //第一个实例
+            table.render({
+                elem: '#demo'
+                ,height: 312
+                ,url:'/index/Index/getmemdata'
+                ,page: true //开启分页
+                ,cols: [[ //表头
+                    {field: 'EID', title: '工号', width:80, sort: true, fixed: 'left'}
+                    ,{field: 'name', title: '姓名', width:80, sort: true}
+                    ,{field: 'Org_C', title: '组织代码', width: 120, sort:  true}
+                    ,{field: 'Org_N', title: '组织名称', width: 120, sort: true}
+                ]]
+            });
+        });
+    }
+</script>
+
+<script>
+
+</script>
+

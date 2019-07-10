@@ -1,0 +1,31 @@
+<table id="demo" lay-filter="test"></table>
+<script>
+    var pagejs = function() {
+        layui.use('table', function(){
+            var table = layui.table;
+
+            //第一个实例
+            table.render({
+                elem: '#demo'
+                ,height: 312
+
+                ,page: true //开启分页
+                ,cols: [[ //表头
+                    {field: 'date', title: '日期', width:80, sort: true, fixed: 'left'}
+                    ,{field: 'week', title: '星期', width:80, sort: true}
+                    ,{field: 'name', title: '姓名', width:80, sort: true}
+                    ,{field: 'Org_N', title: '部门', width:80, sort: true}
+                    ,{field: 'morning', title: '早班', width:80, sort: true}
+                    ,{field: 'noon', title: '中班', width:80, sort: true}
+                    ,{field: 'night', title: '晚班', width: 120, sort:  true}
+                ]],
+
+                data:[
+                    {volist name="org1" id = "vo"}
+                    {'date': '', 'week': '', 'name':'{$vo.name}', 'Org_N': '{$vo.Org_N}'},
+                    {/volist}
+                ]
+            });
+        });
+    }
+</script>

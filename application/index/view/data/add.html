@@ -1,0 +1,60 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <form class="layui-form" method="post" action="/index/Data/add" > <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">EID</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="EID" placrg_ideholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="name" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">组织</label>
+                    <div class="layui-input-block">
+                        <select name="Org_id">
+                            <option value='0' ></option>
+                            {volist name="orgs" id="vo"}
+                            <option value="{$vo.id}">{$vo.Org_N} {$vo.Org_C}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">显示顺序</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="listorder" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="layerform">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var tabjs = function() {
+
+    };
+    tabCloseEvent=function (json) {
+        if(json.code === 1) {
+            layui.table.reload('demo', {});
+        }
+    }
+</script>

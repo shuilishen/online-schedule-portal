@@ -1,0 +1,61 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">管理员工信息</div>
+        <div class="layui-card-body">
+            <div>
+                <a type="button" class="layui-btn my-layer" data-title="添加员工信息" data-url="/index/Member/add">
+                    <i class="layui-icon">&#xe608;</i>新建
+                </a>
+            </div>
+            <div>
+                <table id="demo" lay-filter="test"></table>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/html" id="toolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    var orgsc = {{$ocstr|raw}};
+    var orgsn = {{$onstr|raw}};
+
+    var pagejs = function()
+    {
+        layui.use('table', function(){
+            var table = layui.table;
+
+            //第一个实例
+            table.render({
+                elem: '#demo'
+                ,url:'/index/Member/listdata'
+                ,page: true //开启分页
+                ,height: 600
+                ,cols: [[ //表头
+                    {field: 'id', title: 'ID',  sort: true, fixed: 'left'}
+                    ,{field: 'Emp_id', title: '工号', sort: true}
+                    ,{field: 'name', title: '姓名', sort: true}
+                    ,{field: 'Org_id', title: '组织id', sort: true}
+                    ,{field: 'Org_id', title: '组织代码', sort: true, templet: function (a) {
+                            if(undefined !== orgsc[a.Org_id])
+                                return orgsc[a.Org_id];
+                            else
+                                return a.Org_id;
+                        }}
+                    ,{field: 'Org_id', title: '组织名称', sort: true, templet: function (a) {
+                            if(undefined !== orgsn[a.Org_id])
+                                return orgsn[a.Org_id];
+                            else
+                                return a.Org_id;
+                        }}
+                    ,{field: 'opt', title: '操作', toolbar:'#toolbar'}
+                ]]
+            });
+
+            //监听工具条
+
+
+        });
+    }
+</script>

@@ -1,0 +1,74 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">添加班别</div>
+        <div class="layui-card-body">
+            <form class="layui-form" method="post" id="add"> <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+                <div class="layui-form-item">
+                    <label class="layui-form-label">所属岗位</label>
+                    <div class="layui-input-block">
+                        <select name="PID" >
+                            {volist name="posts" id="vo"}
+                            <option value="{$vo.id}">{$vo.PN}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">班别代码</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="SC" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">班别名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="SN" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">上班时间</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="Time" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">上班规则</label>
+                    <div class="layui-input-block">
+                        <select name="REID">
+                            <option value='0'></option>
+                            {volist name="regulations" id="vo"}
+                            <option value="{$vo.id}">{$vo.title}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">使用日历</label>
+                    <div class="layui-input-block">
+                        <select name="CID">
+                            <option value='0' ></option>
+                            {volist name="calendars" id="vo"}
+                            <option value="{$vo.id}">{$vo.title}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+                <!-- 更多表单结构排版请移步文档左侧【页面元素-表单】一项阅览 -->
+            </form>
+
+
+        </div>
+    </div>
+</div>

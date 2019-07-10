@@ -1,0 +1,42 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">编辑权限</div>
+        <div class="layui-card-body">
+            <form class="layui-form" method="post"> <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+                <div class="layui-form-item">
+                    <label class="layui-form-label">model</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="model" value="{$form_data.m}" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">controller</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="controller" value="{$form_data.c}" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <label class="layui-form-label">action</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="action" value="{$form_data.a}" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <!--
+                <input type="hidden" name="auid" value="{$form_data.auid}">
+                <input type="hidden" name="id" value="{$form_data.id}">-->
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="*">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+                <!-- 更多表单结构排版请移步文档左侧【页面元素-表单】一项阅览 -->
+            </form>
+        </div>
+    </div>
+</div>
