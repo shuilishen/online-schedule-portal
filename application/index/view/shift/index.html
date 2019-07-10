@@ -136,9 +136,9 @@
     var pagejs = function() {
         layui.form.on('select(s1)',function (data) {
             //console.log(data.value);
-            layui.$.post('/index/Shift/getSelect_T/key/'+data.value,'',function (json) {
-                console.log(json);
+            layui.$.post('/index/Shift/getSelect_T/key/' + data.value, '', function (json) {
                 var res=layui.$.parseJSON(json);
+                console.log(res);
                 layui.$('#PID').html(res.PID);
                 layui.$('#SID').empty();
                 layui.$('#CA').empty();
@@ -208,7 +208,7 @@
             ,height: 312
             ,page: true //开启分页
             ,cols: [[ //表头
-                {field: 'EID', title: '工号', width:80, sort: true, fixed: 'left'}
+                {field: 'Emp_id', title: '工号', width:80, sort: true, fixed: 'left'}
                 ,{field: 'name', title: '姓名', width:80, sort: true}
                 ,{field: 'Org_C', title: '组织代码', width: 120, sort:  true}
                 ,{field: 'Org_N', title: '组织名称', width: 120, sort: true}

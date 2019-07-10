@@ -24,7 +24,7 @@ class Index extends myCommonController
     public function index()
     {
         $username = session('uid');
-        $user = Users::where('Emp_id', $username)->find();
+        $user = Users::where('EID', $username)->find();
 
         if($user['Aut_id'] == config('admin_group')){
             $this->redirect('/auth/Group/index');

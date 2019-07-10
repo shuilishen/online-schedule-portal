@@ -10,7 +10,7 @@ namespace app\index\controller;
 
 
 use app\common\controller\myCommonController;
-use app\index\model\Postions;
+use app\index\model\Positions;
 use app\index\model\Orgs;
 
 /**
@@ -39,7 +39,7 @@ class Position extends myCommonController
      * @return array
      */
     public function listdata(){
-        $posts=Postions::select();
+        $posts=Positions::select();
         if($posts && count($posts)>0)
             return ['code'=>0,'msg'=>'','count'=>count($posts),'data'=>$posts];
         else
@@ -54,7 +54,7 @@ class Position extends myCommonController
             $Org_id=$this->request->post('Org_id','');
             $PN=$this->request->post('PN','');
 
-            $post = new Postions;
+            $post = new Positions;
             $post->PN=$PN;
             $post->Org_id=$Org_id;
 
@@ -74,7 +74,7 @@ class Position extends myCommonController
 
         $id=$this->request->param('id',0,'intval');
         if($id>0){
-            $data = Postions::find($id);
+            $data = Positions::find($id);
             if ($data) {
                 if($this->request->isPost()){
                     $data->Org_id=input('post.Org_id');
@@ -99,7 +99,7 @@ class Position extends myCommonController
     public function del(){
         $id=$this->request->param('id',0,'intval');
         if($id>0){
-            $data = Postions::find($id);
+            $data = Positions::find($id);
             if ($data) {
                 $opt=$data->delete();
                 if($opt)

@@ -8,10 +8,10 @@
                 <div class="layui-form-item">
                     <label class="layui-form-label">所属岗位</label>
                     <div class="layui-input-block">
-                        <select name="PID">
+                        <select name="Pos_id">
                             <option value='0'></option>
-                            {volist name="posts" id="vo"}
-                            <option value="{$vo.id}" {if $vo.id == $form_data.PID}selected{/if}>{$vo.PN}</option>
+                            {volist name="positions" id="vo"}
+                            <option value="{$vo.id}" {if $vo.id == $form_data.Pos_id}selected{/if}>{$vo.PN}</option>
                             {/volist}
                         </select>
                     </div>
@@ -42,10 +42,10 @@
                 <div class="layui-form-item">
                     <label class="layui-form-label">上班规则</label>
                     <div class="layui-input-block">
-                        <select name="REID">
+                        <select name="Cir_id">
                             <option value='0'></option>
-                            {volist name="regulations" id="vo"}
-                            <option value="{$vo.id}" {if $vo.id == $form_data.REID}selected{/if}>{$vo.title}</option>
+                            {volist name="circles" id="vo"}
+                            <option value="{$vo.id}" {if $vo.id == $form_data.Cir_id}selected{/if}>{$vo.title}</option>
                             {/volist}
                         </select>
                     </div>
@@ -54,10 +54,10 @@
                 <div class="layui-form-item">
                     <label class="layui-form-label">使用日历</label>
                     <div class="layui-input-block">
-                        <select name="CID">
+                        <select name="Cal_id">
                             <option value='0'></option>
                             {volist name="calendars" id="vo"}
-                            <option value="{$vo.id}" {if $vo.id == $form_data.CID}selected{/if}>{$vo.title}</option>
+                            <option value="{$vo.id}" {if $vo.id == $form_data.Cal_id}selected{/if}>{$vo.title}</option>
                             {/volist}
                         </select>
                     </div>

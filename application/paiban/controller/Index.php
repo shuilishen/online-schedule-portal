@@ -8,11 +8,13 @@
 
 namespace app\paiban\controller;
 
+use app\auth\model\Users;
 use app\common\controller\myCommonController;
 use app\index\model\Members;
 use app\index\model\Orgs;
-use app\index\model\Postions;
+use app\index\model\Positions;
 use app\index\model\Shifts;
+use app\paiban\model\Paiban;
 use think\Db;
 
 class Index extends myCommonController
@@ -26,20 +28,115 @@ class Index extends myCommonController
      *
      *
      */
-    public function index(){
-//        $firstDayNMonth = date("Y-m-d", strtotime('first day of next month'));
-//        $check = Db::table('paiban')->where('date', $firstDayNMonth)->find();
+    public function index()
+    {
+        $EID = session('uid');
+        $user = Users::where('EID', $EID)->find();
 
+        $positions = Positions::where('Org_id', $user['Man_Org_id'])->select();
+        $defaultPosition = Positions::where('Org_id', $user['Man_Org_id'])->find();
+        $this->assign('default_PID', $defaultPosition['id']);
+        $this->assign('positions', $positions);
+        $this->getTable($defaultPosition['id']);
+
+        return $this->fetch();
+    }
+
+    public function getTable($Pos_id)
+    {
+        //$position = Positions::where('id', $Pos_id)->select();
+        $position = Positions::get($Pos_id);
+        $Org = Orgs::get($position['Org_id']);
+
+        $shifts = Shifts::where('Pos_id', $Pos_id)->select();
+
+        $thismonth = strtotime('first day of this month');
+        $nextmonth = strtotime('first day of next month');
+        //myHalt(date("Y-m-d", $nextmonth));
+
+        $firstDayNM = date("Y-m-d", $nextmonth);
+        $check = Paiban::where('date', $firstDayNM)->find();
+
+        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+
+        $paibanData = array();
+        $preData = array();
+        $newData = array();
+        if(!$check)
+        {
+            // no data, load empty table
+            $startdate = $nextmonth;
+            $enddate = strtotime('+1 month', $nextmonth);
+
+
+            while ($startdate < $enddate) {
+                $temp = getdate($startdate);
+
+                $paibanData[] = [
+                    'date' => date("Y-m-d", $startdate),
+                    'Org_id' => $Org['id'],
+                    'Pos_id' => $Pos_id,
+                    'Shi_id' => '',
+                    'Mem_id' => ''
+                ];
+
+                $newData[] = [
+                    'date' => date("Y-m-d", $startdate),
+                    'weekDay' => $wday[$temp['wday']],
+                    'Org_N' => $Org['Org_N']
+                ];
+
+                $startdate = strtotime("+1 day", $startdate);
+            }
+            //save
+//            $paiban = new Paiban;
+//            $paiban->saveAll($pdata);
+
+            $startdate = strtotime('+20 days', $thismonth);
+            $enddate = strtotime($nextmonth);
+
+
+            //check if previous data exist
+            if(false)
+            {
+                //exist
+                while ($startdate < $enddate) {
+                    $preData[] = [
+                        'date' => date("Y-m-d", $startdate),
+                        'weekDay' => $wday[$temp['wday']],
+                        'Org_N' => $Org['Org_N']
+                    ];
+
+                    $startdate = strtotime("+1 day", $startdate);
+                }
+            }
+        }
+        else
+        {
+
+        }
+
+        $this->assign('displayData', $newData);
+        return json_encode($Pos_id);
+    }
+
+//
 //        $thismonth = strtotime('first day of this month');
+//        $nextmonth = strtotime('first day of next month');
 //        $startdate = strtotime('+20 days', $thismonth);
 //        $enddate = strtotime('+2 month', $thismonth);
 //
+//        $firstDayNM = date("Y-m-d", $nextmonth);
+//        $check = Paiban::where('date', $firstDayNM)->find();
+//
 //
 //        $dates = array();
-//        $weekDay = array();
-//        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+//
+//
 //        while ($startdate < $enddate) {
-//            $dates[]['date'] = date("Y-m-d", $startdate);
+//            $displayDates[] = date("Y-m-d", $startdate);
+//            $dates[] = date("Y-m-d", $startdate);
+//
 //            $temp = getdate($startdate);
 //            $weekDay[] = $wday[$temp['wday']];
 //
@@ -50,8 +147,17 @@ class Index extends myCommonController
 //        {
 //            //create data for this month
 //
-//            $paiban = new Paiban;
-//            Db::name('paiban')->insertAll($dates);
+//
+//            $newlist = array();
+//            $startdate = strtotime($nextmonth);
+//            $enddate = strtotime('+1 month', $nextmonth);
+//            while ($startdate < $enddate) {
+//                $newlist[]['date'] = date("Y-m-d", $startdate);
+//                $newlist[]['Org_id']
+//            }
+//
+//
+//
 //
 //        }
 //        else
@@ -59,70 +165,63 @@ class Index extends myCommonController
 //            //load data
 //            myHalt($check);
 //        }
-        // assign variables
+//        // assign variables
+//
+//
+//
+//
+//
+//        $org = Orgs::where('id', $user['Org_id'])->find();
+//
+//        $org_members = Members::where('Org_id', $user['Org_id'])->select();
+//
+//        $positions = Positions::where('Org_id', $user['Org_id'])->select();
+//
+//        $shifts = array();
+//        foreach ($positions as $key=>$position) {
+//            $shifts[$position['PN']] = Shifts::where('Pos_id', $position['id'])->select();
+//            $positions[$key]['shiftCount'] = sizeof($shifts[$position['PN']]);
+//
+//        }
+//
+//        $thismonth = strtotime('first day of this month');
+//        $startdate = strtotime('+20 days', $thismonth);
+//        $enddate = strtotime('+2 month', $thismonth);
+//
+//        $dates = array();
+//        $week = array();
+//        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+//        while ($startdate < $enddate) {
+//            $dates[] = date("Y-m-d", $startdate);
+//            $temp = getdate($startdate);
+//            $week[] = $wday[$temp['wday']];
+//            $startdate = strtotime("+1 day", $startdate);
+//        }
+//
+//        $fixedInfo = array();
+//        $draggableInfo = array();
+//        foreach ($dates as $key=>$date) {
+//            $fixedInfo[$key]['date'] = $date;
+//            $fixedInfo[$key]['week'] = $week[$key];
+//            $fixedInfo[$key]['Org_N'] = $org['Org_N'];
+//
+//            foreach ($shifts as $key2=>$shift)
+//            {
+//                foreach ($shift as $key3=>$s){
+//                    $draggableInfo[$key][] = '';
+//                }
+//
+//            }
+//        }
+//
+//
+//
+//        $this->assign('shifts', $shifts);
+//        $this->assign('shifts2', str_replace("\\r\\n","",json_encode($shifts)));
+//        $this->assign('fixedInfo', $fixedInfo);
+//        $this->assign('draggableInfo',$draggableInfo);
+//
+//        return $this->fetch();
 
 
-
-        $EID=session('uid');
-        $user = Members::where('Emp_id', $EID)->find();
-        $org = Orgs::where('id', $user['Org_id'])->find();
-
-        $org_members = Members::where('Org_id', $user['Org_id'])->select();
-
-        $posts = Postions::where('Org_id', $user['Org_id'])->select();
-
-        $shifts = array();
-        foreach ($posts as $key=>$post) {
-            $shifts[$post['PN']] = Shifts::where('Pos_id', $post['id'])->select();
-            $posts[$key]['shiftCount'] = sizeof($shifts[$post['PN']]);
-
-        }
-
-        $thismonth = strtotime('first day of this month');
-        $startdate = strtotime('+20 days', $thismonth);
-        $enddate = strtotime('+2 month', $thismonth);
-
-        $dates = array();
-        $week = array();
-        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
-        while ($startdate < $enddate) {
-            $dates[] = date("Y-m-d", $startdate);
-            $temp = getdate($startdate);
-            $week[] = $wday[$temp['wday']];
-            $startdate = strtotime("+1 day", $startdate);
-        }
-
-        $fixedInfo = array();
-        $draggableInfo = array();
-        foreach ($dates as $key=>$date) {
-            $fixedInfo[$key]['date'] = $date;
-            $fixedInfo[$key]['week'] = $week[$key];
-            $fixedInfo[$key]['Org_N'] = $org['Org_N'];
-
-            foreach ($shifts as $key2=>$shift)
-            {
-                foreach ($shift as $key3=>$s){
-                    $draggableInfo[$key][] = '';
-                }
-
-            }
-        }
-
-        $this->assign('posts',$posts);
-
-        $this->assign('shifts', $shifts);
-        $this->assign('shifts2', str_replace("\\r\\n","",json_encode($shifts)));
-        $this->assign('fixedInfo', $fixedInfo);
-        $this->assign('draggableInfo',$draggableInfo);
-
-        return $this->fetch();
-    }
-
-    /**
-     * @name 表格
-     */
-    public function getTable()
-    {
-        $id=$this->request->param('id',0,'intval');
-    }
 }

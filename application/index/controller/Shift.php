@@ -11,13 +11,12 @@ namespace app\index\controller;
 
 use app\common\controller\myCommonController;
 use app\index\model\Calendars;
-use app\index\model\Postions;
-use app\paiban\model\Regulations;
+use app\index\model\Circles;
+use app\index\model\Orgs;
+use app\index\model\Positions;
 use app\index\model\Shifts;
 use app\index\model\Members;
 use think\Db;
-use think\View;
-use think\db\Connection;
 
 /**
  * @name    班别
@@ -26,6 +25,7 @@ use think\db\Connection;
  */
 class Shift extends myCommonController
 {
+
     /**
      * @name    主页
      * @return mixed
@@ -35,7 +35,8 @@ class Shift extends myCommonController
      */
     public function index()
     {
-        $org=Db::table('data_organizations')->order('Org_C ASC')->select();
+        $org = Orgs::order('Org_C ASC')->select();
+        //$org=Db::table('data_organizations')->order('Org_C ASC')->select();
         $this->assign('org',$org);
 
         return $this->fetch();
@@ -48,8 +49,9 @@ class Shift extends myCommonController
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
      */
-    public function getmemdata(){
-        $members=Db::table('data_members')->field('EID, name, Org_C, Org_N')->select();
+    public function getmemdata()
+    {
+        $members = Members::field('Emp_id, name, Org_C, Org_N')->select();
         if($members && count($members)>0)
             return ['code'=>0,'msg'=>'','count'=>count($members),'data'=>$members];
         else
@@ -58,20 +60,18 @@ class Shift extends myCommonController
 
     /**
      * @name    选择
-     * @param $s
      * @param $key
-     * @return \think\Response
+     * @return string
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
-     *
      */
     public function getSelect_T($key){
         $str = '<option value="">请选择</option>';
 
         $m = Members::where('Org_id', $key)->select();
-        $post = Postions::where('Org_id', $key)->select();
-        foreach ($post as $item) {
+        $position = Positions::where('Org_id', $key)->select();
+        foreach ($position as $item) {
             $str .= sprintf('<option value="%s">%s</option>',$item['id'], $item['PN']);
         }
         $data = [
@@ -91,7 +91,7 @@ class Shift extends myCommonController
      */
     public function getSelect($key){
         $str='<option value="">请选择</option>';
-        $shift=Db::table('data_shifts')->where('PID', $key)->select();
+        $shift = Shifts::where('Pos_id', $key)->select();
         $std = Shifts::where('SC', '001')->find();
 
         $str.= sprintf('<option value="%s">%s</option>',$std['id'], $std['SN']);
@@ -110,8 +110,8 @@ class Shift extends myCommonController
     public function getData($key){
 
         $shifts = Shifts::get($key);
-        $ca = Calendars::get($shifts['CID']);
-        $re = Regulations::get($shifts['REID']);
+        $ca = Calendars::get($shifts['Cal_id']);
+        $re = Circles::get($shifts['Cir_id']);
 
         $round = $re['value'][0] + $re['value'][1];
         $str = '<tbody>';
@@ -152,20 +152,20 @@ class Shift extends myCommonController
 
     public function add()
     {
-        $posts=Postions::select();
-        $this->assign('posts', $posts);
+        $positions=Positions::select();
+        $this->assign('positions', $positions);
         $calendars=Calendars::select();
         $this->assign('calendars', $calendars);
-        $regulations=Regulations::select();
-        $this->assign('regulations', $regulations);
+        $circles = Circles::select();
+        $this->assign('circles', $circles);
 
         if($this->request->isPost()){
             $SC = $this->request->post('SC','');
             $SN = $this->request->post('SN','');
             $Time = $this->request->post('Time','');
-            $PID = $this->request->post('PID','');
-            $REID = $this->request->post('REID','');
-            $CID = $this->request->post('CID','');
+            $Pos_id = $this->request->post('Pos_id','');
+            $Cir_id = $this->request->post('Cir_id','');
+            $Cal_id = $this->request->post('Cal_id','');
             $check=Shifts::where('SC',$SC)->find();
 
             if($check)
@@ -176,9 +176,9 @@ class Shift extends myCommonController
                 $shift->SC=$SC;
                 $shift->SN=$SN;
                 $shift->Time=$Time;
-                $shift->PID=$PID;
-                $shift->REID=$REID;
-                $shift->CID=$CID;
+                $shift->Pos_id=$Pos_id;
+                $shift->Cir_id=$Cir_id;
+                $shift->Cal_id=$Cal_id;
 
                 $opt=$shift->save();
                 if($opt)
@@ -192,24 +192,24 @@ class Shift extends myCommonController
     }
 
     public function edit(){
-        $posts=Postions::select();
+        $posts=Positions::select();
         $this->assign('posts', $posts);
         $calendars=Calendars::select();
         $this->assign('calendars', $calendars);
-        $regulations=Regulations::select();
-        $this->assign('regulations', $regulations);
+        $circles=Circles::select();
+        $this->assign('circles', $circles);
 
         $id=$this->request->param('id',0,'intval');
         if($id>0){
-            $data = Postions::find($id);
+            $data = Positions::find($id);
             if ($data) {
                 if($this->request->isPost()){
                     $data->SC=input('post.SC');
                     $data->SN=input('post.SN');
                     $data->Time=input('post.Time');
-                    $data->PID=input('post.PID');
-                    $data->REID=input('post.REID');
-                    $data->CID=input('post.CIE');
+                    $data->Pos_id=input('post.Pos_id');
+                    $data->Cir_id=input('post.Cir_id');
+                    $data->Cal_id=input('post.Cal_id');
 
                     $opt = $data->save();
                     if($opt)

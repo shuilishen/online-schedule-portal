@@ -72,13 +72,13 @@ class myCommonController extends Controller
      * @throws \think\exception\DbException
      */
     public function check($un,$pw){
-        $user = Users::where('Emp_id', $un)->find();
+        $user = Users::where('EID', $un)->find();
 
         if(false==$user){
             return false;
         }
         if($user['password']==$pw){
-            session('uid',$user['Emp_id']);
+            session('uid',$user['EID']);
             session('auid',$user['Aut_id']);
             return true;
         }

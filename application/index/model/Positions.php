@@ -11,7 +11,7 @@ namespace app\index\model;
 
 use think\Model;
 
-class Postions extends Model
+class Positions extends Model
 {
     protected $table = 'data_positions';
 }

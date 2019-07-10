@@ -2,7 +2,6 @@
     #draggable { width: 476px; height: 360px; padding: 0.5em}
 </style>
 
-<div class="section" >
     <div class="layui-card">
         <div class="layui-card-header">排班系统</div>
         <div class="layui-card-body">
@@ -15,116 +14,83 @@
                         <label class = "layui-form-label">选择岗位：</label>
                         <div class="layui-input-block">
 
-                            <select name="PID" id = "PID" class="layui-select layui-input" lay-filter = "position" >
-                                {volist name="posts" id="vo"}
-                                <option value= {$vo.id} >{$vo.PN}</option>
+                            <select id = "PID" class="layui-select layui-input" lay-filter = "position" >
+                                {volist name="positions" id="vo"}
+                                <option value='{$vo.id}' {if $vo.id == $default_PID}selected{/if}>{$vo.PN}</option>
                                 {/volist}
                             </select>
-
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             </form>
 
 
-            <table class="layui-table" style="text-align: center">
+            <table id = "ptable" class="layui-table" style="text-align: center">
                 <colgroup>
                     <col width="150">
                     <col width="100">
                     <col width="150">
-                    <col width="100">
-
                 </colgroup>
+
                 <thead >
                 <tr>
                     <th rowspan="2" style="text-align: center">日期</th>
                     <th rowspan="2">星期</th>
                     <th rowspan="2">部门</th>
-
-                    {volist name="posts" id="vo"}
-                    <th colspan = {$vo.shiftCount} >{$vo.PN} </th>
-                    {/volist}
-
-                </tr>
-                <tr>
-                    {foreach $shifts as $key1=>$vo1}
-                        {foreach $vo1 as $key2=>$vo2}
-                        <th >{$vo2.SN}</th>
-                        {/foreach}
-                    {/foreach}
                 </tr>
 
                 </thead>
 
-                <tfoot>
+                <tbody id ="pdata">
+
+
+                {volist name="displayData" key = "i" id="vo1"}
                 <tr>
-                    <td>Sum</td>
-                    <td>$180</td>
+                    <td>{$vo1.date}</td>
+                    <td>{$vo1.weekDay}</td>
+                    <td>{$vo1.Org_N}</td>
                 </tr>
-                </tfoot>
-
-                <tbody>
-
-                    {volist name="fixedInfo" key = "i" id="vo1"}
-                    <tr>
-                        <td>{$vo1.date}</td>
-                        <td>{$vo1.week}</td>
-                        <td>{$vo1.Org_N}</td>
-                        {volist name="draggableInfo[$i]" id="vo2"}
-                        <td></td>
-                        {/volist}
-                    </tr>
-                    {/volist}
+                {/volist}
 
                 </tbody>
+
+
             </table>
 
-            <div id="draggable" class="ui-widget-content">
-                <div id="test1"></div>
-            </div>
+
 
         </div>
     </div>
-</div>
 
 
 <script>
-    var shift = JSON.parse('{$shifts2|raw}');
-    console.log(shift);
-
+    //var displayData = JSON.parse('{$displayData|raw}');
+    //console.log({$displayData|raw});
     var pagejs = function() {
         layui.form.on('select(position)',function (data) {
-            layui.$.post('/paiban/index/getTable/id/'+data.value,'',function (json) {
-                console.log(json);
+            layui.$.post('/paiban/index/getTable',{Pos_id: data.value}, function (json) {
                 var res=layui.$.parseJSON(json);
+
                 // layui.$('#PID').html(res.PID);
                 // layui.$('#SID').empty();
                 // layui.$('#CA').empty();
                 // layui.form.render('select');
-                // refreshMTable(res.mtable);
+                //refreshTable(res.table);
                 // console.log(res.mtable);
             }, 'json');
 
         });
-
-
-        var transfer = layui.transfer;
-
-        //渲染
-        transfer.render({
-            elem: '#test1'  //绑定元素
-            ,data: [
-                {"value": "1", "title": "李白", "disabled": "", "checked": ""}
-                ,{"value": "2", "title": "杜甫", "disabled": "", "checked": ""}
-                ,{"value": "3", "title": "贤心", "disabled": "", "checked": ""}
-            ]
-            ,id: 'demo1' //定义索引
-        });
-
-        $(function () {
-            $("#draggable").draggable();
-        });
-
     };
+    //
+    // function refreshTable(data) {
+    //     //第一个实例
+    //     layui.table.render({
+    //         elem: '#'
+    //         ,height: 312
+    //         data: data
+    //     });
+    // }
+
+
 </script>
