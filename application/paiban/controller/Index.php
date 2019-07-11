@@ -15,7 +15,6 @@ use app\index\model\Orgs;
 use app\index\model\Positions;
 use app\index\model\Shifts;
 use app\paiban\model\Paiban;
-use think\Db;
 
 class Index extends myCommonController
 {
@@ -44,81 +43,115 @@ class Index extends myCommonController
 
     public function getTable($Pos_id)
     {
-        //$position = Positions::where('id', $Pos_id)->select();
         $position = Positions::get($Pos_id);
         $Org = Orgs::get($position['Org_id']);
 
         $shifts = Shifts::where('Pos_id', $Pos_id)->select();
 
-        $thismonth = strtotime('first day of this month');
         $nextmonth = strtotime('first day of next month');
-        //myHalt(date("Y-m-d", $nextmonth));
 
         $firstDayNM = date("Y-m-d", $nextmonth);
         $check = Paiban::where('date', $firstDayNM)->find();
 
-        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
-
         $paibanData = array();
-        $preData = array();
-        $newData = array();
         if(!$check)
         {
-            // no data, load empty table
+            // no data, initialize
             $startdate = $nextmonth;
             $enddate = strtotime('+1 month', $nextmonth);
 
-
             while ($startdate < $enddate) {
-                $temp = getdate($startdate);
-
-                $paibanData[] = [
-                    'date' => date("Y-m-d", $startdate),
-                    'Org_id' => $Org['id'],
-                    'Pos_id' => $Pos_id,
-                    'Shi_id' => '',
-                    'Mem_id' => ''
-                ];
-
-                $newData[] = [
-                    'date' => date("Y-m-d", $startdate),
-                    'weekDay' => $wday[$temp['wday']],
-                    'Org_N' => $Org['Org_N']
-                ];
-
+                foreach($shifts as $shift)
+                {
+                    $paibanData[] = [
+                        'date' => date("Y-m-d", $startdate),
+                        'Org_id' => $Org['id'],
+                        'Pos_id' => $Pos_id,
+                        'Shi_id' => $shift['id'],
+                        'Mem_id' => ''
+                    ];
+                }
                 $startdate = strtotime("+1 day", $startdate);
             }
-            //save
-//            $paiban = new Paiban;
-//            $paiban->saveAll($pdata);
-
-            $startdate = strtotime('+20 days', $thismonth);
-            $enddate = strtotime($nextmonth);
-
-
-            //check if previous data exist
-            if(false)
-            {
-                //exist
-                while ($startdate < $enddate) {
-                    $preData[] = [
-                        'date' => date("Y-m-d", $startdate),
-                        'weekDay' => $wday[$temp['wday']],
-                        'Org_N' => $Org['Org_N']
-                    ];
-
-                    $startdate = strtotime("+1 day", $startdate);
-                }
-            }
-        }
-        else
-        {
-
+            $paiban = new Paiban;
+            $paiban->saveAll($paibanData);
         }
 
-        $this->assign('displayData', $newData);
-        return json_encode($Pos_id);
+        $this->readPData($Pos_id);
     }
+
+    private function readPData($Pos_id)
+    {
+        $paibanData = Paiban::where('Pos_id', $Pos_id)->select();
+
+        $TableHead = array();
+        $TableData = array();
+
+        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+        $nextmonth = strtotime('first day of next month');
+
+        $startdate = $nextmonth;
+        $enddate = strtotime('+1 month', $nextmonth);
+
+        while ($startdate < $enddate) {
+//            $TableData[] = [
+//                'date' =>
+//
+//            ];
+
+            $startdate = strtotime("+1 day", $startdate);
+        }
+
+
+//
+//        $position = Positions::get($Pos_id);
+//        $Org = Orgs::get($position['Org_id']);
+//
+//
+//
+//        while ($startdate < $enddate) {
+////                $temp = getdate($startdate);
+//            $paibanData[] = [
+//                'date' => date("Y-m-d", $startdate),
+//                'Org_id' => $Org['id'],
+//                'Pos_id' => $Pos_id,
+//                'Shi_id' => '',
+//                'Mem_id' => ''
+//            ];
+//            $startdate = strtotime("+1 day", $startdate);
+//        }
+
+    }
+
+
+//                $temp = getdate($startdate);
+
+
+//                $newData[] = [
+//                    'date' => date("Y-m-d", $startdate),
+//                    'weekDay' => $wday[$temp['wday']],
+//                    'Org_N' => $Org['Org_N']
+//                ];
+
+//            $startdate = strtotime('+20 days', $thismonth);
+//            $enddate = $nextmonth;
+//
+//
+//            //check if previous data exist
+//            if(false)
+//            {
+//                //exist
+//                while ($startdate < $enddate) {
+//                    $temp = getdate($startdate);
+//                    $preData[] = [
+//                        'date' => date("Y-m-d", $startdate),
+//                        'weekDay' => $wday[$temp['wday']],
+//                        'Org_N' => $Org['Org_N']
+//                    ];
+//
+//                    $startdate = strtotime("+1 day", $startdate);
+//                }
+//            }
 
 //
 //        $thismonth = strtotime('first day of this month');
@@ -166,9 +199,6 @@ class Index extends myCommonController
 //            myHalt($check);
 //        }
 //        // assign variables
-//
-//
-//
 //
 //
 //        $org = Orgs::where('id', $user['Org_id'])->find();

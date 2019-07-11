@@ -80,6 +80,7 @@
 
     var vacations = cv1;
     var vtable = vt1;
+
     var vtypes = {{$vtypes|raw}};
 
 
@@ -140,6 +141,7 @@
         });
 
         layui.element.on('tab(calendars)', function(data){
+
             switch (data.index){
                 case 0:
                     vtable = vt1;
@@ -154,6 +156,7 @@
                     vacations = cv3;
                     break;
             }
+            console.log(vtable);
             layui.$('#add').data('url','/index/Calendar/add/cid/'+this['id']).data('title','新建');
 
             table.reload('vacation', {

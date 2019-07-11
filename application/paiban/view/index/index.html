@@ -1,7 +1,7 @@
 <style>
     #draggable { width: 476px; height: 360px; padding: 0.5em}
 </style>
-
+<div class="section" >
     <div class="layui-card">
         <div class="layui-card-header">排班系统</div>
         <div class="layui-card-body">
@@ -25,72 +25,37 @@
                 </div>
             </form>
 
+            <table id="dg"></table>
 
-            <table id = "ptable" class="layui-table" style="text-align: center">
-                <colgroup>
-                    <col width="150">
-                    <col width="100">
-                    <col width="150">
-                </colgroup>
-
-                <thead >
-                <tr>
-                    <th rowspan="2" style="text-align: center">日期</th>
-                    <th rowspan="2">星期</th>
-                    <th rowspan="2">部门</th>
-                </tr>
-
-                </thead>
-
-                <tbody id ="pdata">
-
-
-                {volist name="displayData" key = "i" id="vo1"}
-                <tr>
-                    <td>{$vo1.date}</td>
-                    <td>{$vo1.weekDay}</td>
-                    <td>{$vo1.Org_N}</td>
-                </tr>
-                {/volist}
-
-                </tbody>
-
-
-            </table>
-
+            <table id="paibanTable" lay-filter="table" class="layui-table"></table>
 
 
         </div>
     </div>
 
-
+</div>
 <script>
-    //var displayData = JSON.parse('{$displayData|raw}');
-    //console.log({$displayData|raw});
+    var dummy = [];
     var pagejs = function() {
-        layui.form.on('select(position)',function (data) {
-            layui.$.post('/paiban/index/getTable',{Pos_id: data.value}, function (json) {
-                var res=layui.$.parseJSON(json);
+        $("#dg").datagrid({
+            columns:[[
+                {field:'f1',title:'日期',  rowspan: 2, width:100},
+                {field:'f2',title:'星期',  rowspan: 2, width:100},
+                {field:'f3',title:'部门', rowspan: 2,  width:100},
+                {field:'', title:'部门', colspan: 3, width:100}
+            ],
+            [
+                {field: 'f4', title:'岗位1',  align:'right'},
+                {field: 'f5', title:'岗位2',  align:'right'},
+                {field: 'f6', title:'岗位3',  align:'right'}
 
-                // layui.$('#PID').html(res.PID);
-                // layui.$('#SID').empty();
-                // layui.$('#CA').empty();
-                // layui.form.render('select');
-                //refreshTable(res.table);
-                // console.log(res.mtable);
-            }, 'json');
-
+            ]],
+            data: [
+                {f1: 'aaa', f2:'aaa', f3: 'aaa', f4:'aaa', f5:'aaa', f6:'aaa'}
+            ]
         });
+
     };
-    //
-    // function refreshTable(data) {
-    //     //第一个实例
-    //     layui.table.render({
-    //         elem: '#'
-    //         ,height: 312
-    //         data: data
-    //     });
-    // }
 
 
 </script>

@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="/jquery-ui/jquery-ui.css">
     <link rel="stylesheet" href="http://jqueryui.com/resources/demos/style.css">
 
+    <link rel = "stylesheet" type = "text/css" href="/jquery-easyui/themes/default/easyui.css">
+    <link rel = "stylesheet" type = "text/css" href="/jquery-easyui/themes/icon.css">
+
     <link href='/fullcalendar-4.2.0/packages/core/main.css' rel='stylesheet' />
     <link href='/fullcalendar-4.2.0/packages/daygrid/main.css' rel='stylesheet' />
     <link href='/static/my/mystyle.css' rel='stylesheet' />
@@ -44,14 +47,14 @@
             <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
             <ul class="layui-nav layui-nav-tree"  lay-filter="test">
                 {volist name = "$mainmenu" id="vo"}
-                    <li class="layui-nav-item layui-nav-itemed">
-                        <a class="" href="javascript:;">{$vo.title}</a>
-                        <dl class="layui-nav-child">
-                            {volist name = "$vo.item" id="vo2"}
-                                <dd{if $vo2.active} class="layui-this"{/if}><a href="{$vo2.url}">{$vo2.title}</a></dd>
-                            {/volist}
-                        </dl>
-                    </li>
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a class="" href="javascript:;">{$vo.title}</a>
+                    <dl class="layui-nav-child">
+                        {volist name = "$vo.item" id="vo2"}
+                        <dd{if $vo2.active} class="layui-this"{/if}><a href="{$vo2.url}">{$vo2.title}</a></dd>
+                        {/volist}
+                    </dl>
+                </li>
                 {/volist}
             </ul>
         </div>
@@ -68,17 +71,24 @@
         © layui.com - 底部固定区域
     </div>
 </div>
+<script type="text/javascript" src="/jquery-easyui/jquery.min.js"></script>
+
 <script src="/static/layui.all.js"></script>
 <script src="/static/my/my.js"></script>
 <script src='/fullcalendar-4.2.0/packages/core/main.js'></script>
 <script src='/fullcalendar-4.2.0/packages/daygrid/main.js'></script>
 
-<script src="/jquery/jquery.js"></script>
+
 <script src="/jquery-ui/jquery-ui.js"></script>
+
+
+<script type="text/javascript" src="/jquery-easyui/jquery.easyui.min.js"></script>
+
 <script>
     if("undefined"!==typeof pagejs){
         pagejs();
     }
+
 </script>
 </body>
 </html>
