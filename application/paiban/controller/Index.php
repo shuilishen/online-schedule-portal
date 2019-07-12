@@ -41,6 +41,15 @@ class Index extends myCommonController
         return $this->fetch();
     }
 
+    /**
+     * @name    表格
+     * @param $Pos_id
+     * @throws \Exception
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     *
+     */
     public function getTable($Pos_id)
     {
         $position = Positions::get($Pos_id);
@@ -83,44 +92,73 @@ class Index extends myCommonController
     private function readPData($Pos_id)
     {
         $paibanData = Paiban::where('Pos_id', $Pos_id)->select();
+        $Shifts = Shifts::where('Pos_id', $Pos_id)->select();
 
-        $TableHead = array();
-        $TableData = array();
+        $Position = Positions::get($Pos_id);
+        $Org = Orgs::get($Position['Org_id']);
 
-        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
+        $tableHead = array();
+        $tableData = array();
+
+        $wday = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
         $nextmonth = strtotime('first day of next month');
 
         $startdate = $nextmonth;
         $enddate = strtotime('+1 month', $nextmonth);
 
-        while ($startdate < $enddate) {
-//            $TableData[] = [
-//                'date' =>
-//
-//            ];
+        $cols = 0;
+        $i = 0;
+        $NumEOfShifts = 0;
 
+        $tableHead[0][0] = "{field:'date', title:'日期', rowspan: 2, width:50, align: 'center'}";
+        $tableHead[0][1] = "{field:'weekDay', title:'星期', rowspan: 2, width:50, align: 'center'}";
+        $tableHead[0][2] = "{field:'org', title:'组织', rowspan: 2, width:50, align: 'center'}";
+
+
+        while ($startdate < $enddate) {
+
+            $dateIndex = getdate($startdate);
+            $tableData[$i][] = "date: '".date("Y-m-d", $startdate)."'";
+            $tableData[$i][] = "weekDay: '".$wday[$dateIndex['wday']]."'";
+            $tableData[$i][] = "org: '".$Org['Org_N']."'";
+
+
+            foreach ($Shifts as $key=>$Shift) {
+
+                $EmployeeOfShift = Paiban::where('date', date("Y-m-d", $startdate))->where('Shi_id', $Shift['id'])->select();
+                $NumEOfShifts += count($EmployeeOfShift);
+                foreach ($EmployeeOfShift as $key2=>$value)
+                {
+                    $tableHead[1][$key+$key2] = "{field:'EID".($key+$key2)."', title:'".$Shift['SN']."<a href=\'javascript:;\' class=\'l-btn l-btn-small l-btn-plain\' group=\'\' id=\'\'><span class=\'l-btn-left l-btn-icon-left\'><span class=\'l-btn-text\'>Add</span><span class=\'l-btn-icon icon-add\'>&nbsp;</span></span></a>', align: 'center', width: 100}";
+
+
+                    $Member = Members::get($value['Mem_id']);
+
+                    $tableData[$i][] = "EID".($key+$key2).": '".$Member['name']."'";
+                }
+            }
+            if($NumEOfShifts > $cols)
+                $cols = $NumEOfShifts;
+            $NumEOfShifts = 0;
+
+
+            $tableData[$i] = '{'.implode(',',$tableData[$i]).'}';
             $startdate = strtotime("+1 day", $startdate);
+            $i++;
         }
 
 
-//
-//        $position = Positions::get($Pos_id);
-//        $Org = Orgs::get($position['Org_id']);
-//
-//
-//
-//        while ($startdate < $enddate) {
-////                $temp = getdate($startdate);
-//            $paibanData[] = [
-//                'date' => date("Y-m-d", $startdate),
-//                'Org_id' => $Org['id'],
-//                'Pos_id' => $Pos_id,
-//                'Shi_id' => '',
-//                'Mem_id' => ''
-//            ];
-//            $startdate = strtotime("+1 day", $startdate);
-//        }
+        $tableHead[0][3] = "{title:'".$Position['PN']."', colspan: ".$cols.", width:100}";
 
+        $tableHead[0] = '['.implode(',', $tableHead[0]).']';
+        $tableHead[1] = '['.implode(',', $tableHead[1]).']';
+
+        $tableData = '['.implode(',', $tableData).']';
+        $tableHead = '['.implode(',', $tableHead).']';
+
+
+        $this->assign('tableHead', $tableHead);
+        $this->assign('tableData', $tableData);
     }
 
 

@@ -1,19 +1,13 @@
-<style>
-    #draggable { width: 476px; height: 360px; padding: 0.5em}
-</style>
 <div class="section" >
     <div class="layui-card">
         <div class="layui-card-header">排班系统</div>
         <div class="layui-card-body">
 
             <form class = "layui-form" action="" lay_filter = "component-form-element">
-
-                <div class = "layui-row layui-col-space10 layui-form-item">
-
-                    <div class = "layui-col-log6 layui-col-md3">
-                        <label class = "layui-form-label">选择岗位：</label>
+                <div class = "layui-row layui-form-item">
+                    <div class = "layui-col-lg6 layui-col-md3 layui-inline">
+                        <label class = "layui-form-label" >选择岗位：</label>
                         <div class="layui-input-block">
-
                             <select id = "PID" class="layui-select layui-input" lay-filter = "position" >
                                 {volist name="positions" id="vo"}
                                 <option value='{$vo.id}' {if $vo.id == $default_PID}selected{/if}>{$vo.PN}</option>
@@ -25,37 +19,51 @@
                 </div>
             </form>
 
-            <table id="dg"></table>
+            <div class = "layui-row">
+                <div class = "layui-col-log6 layui-col-md8" id="tablewrap">
+                        <table id="paibanTable"></table>
+                </div>
 
-            <table id="paibanTable" lay-filter="table" class="layui-table"></table>
-
+            </div>
 
         </div>
     </div>
 
 </div>
 <script>
-    var dummy = [];
+    var tableHead = {$tableHead|raw};
+    var tableData = {$tableData|raw};
+
+    console.log(tableHead);
+    console.log(tableData);
+
+    var toolbar = [{
+        text:'undo',
+        iconCls:'icon-undo',
+        handler:function(){alert('undo')}
+    },'-',{
+        text:'Save',
+        iconCls:'icon-save',
+        handler:function(){alert('save')}
+    }];
+
     var pagejs = function() {
-        $("#dg").datagrid({
-            columns:[[
-                {field:'f1',title:'日期',  rowspan: 2, width:100},
-                {field:'f2',title:'星期',  rowspan: 2, width:100},
-                {field:'f3',title:'部门', rowspan: 2,  width:100},
-                {field:'', title:'部门', colspan: 3, width:100}
-            ],
-            [
-                {field: 'f4', title:'岗位1',  align:'right'},
-                {field: 'f5', title:'岗位2',  align:'right'},
-                {field: 'f6', title:'岗位3',  align:'right'}
+        table = $("#paibanTable").datagrid({
 
-            ]],
-            data: [
-                {f1: 'aaa', f2:'aaa', f3: 'aaa', f4:'aaa', f5:'aaa', f6:'aaa'}
-            ]
-        });
-
+            columns: tableHead,
+            data: tableData,
+            height: 'auto',
+            fitColumns: true,
+            checkOnSelect: false,
+            selectOnCheck: false,
+            singleSelect: true,
+            toolbar:toolbar,
+            scrollbarSize: 0
+        }).datagrid('resize');
     };
+    var pageresize = function () {
+        $("#paibanTable").datagrid('resize');
+    }
 
 
 </script>
