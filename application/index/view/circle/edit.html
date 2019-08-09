@@ -1,0 +1,157 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">上班规则细节</div>
+        <div class="layui-card-body">
+
+            <form class="layui-form" method="post" action="/index/Circle/edit" >
+
+                <input type="hidden" name="id" value="{$formData.id}">
+
+                <div class = "layui-row layui-col-space10">
+                    <div class = "layui-col-log4 layui-col-md4 layui-form-item">
+                        <label class="layui-form-label">标题</label>
+                        <div class="layui-input-block">
+                            <input type="text" name="title" value = {$formData.title} placeholder="请输入" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-col-space10">
+                    <div class = "layui-col-log4 layui-col-md4 layui-form-item">
+                        <label class="layui-form-label">类别</label>
+                        <div class="layui-input-block">
+                            <select name="type">
+                                {volist name="ctypes" id="vo"}
+                                <option value="{$vo.id}" {if $vo.id == $formData.type}selected{/if} >{$vo.title}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-col-space10">
+                    <div class = "layui-col-log4 layui-col-md4 layui-form-item">
+                        <label class="layui-form-label">使用日历</label>
+                        <div class="layui-input-block">
+                            <select name="Cal_id">
+                                {volist name="calendars" id="vo"}
+                                <option value="{$vo.id}" {if $vo.id == $formData.Cal_id}selected{/if} >{$vo.title}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-col-space10">
+                    <div class = "layui-col-log4 layui-col-md4 layui-form-item">
+                        <label class="layui-form-label">所属组织</label>
+                        <div class="layui-input-block">
+                            <select name="Org_id">
+                                {volist name="orgs" id="vo"}
+                                <option value="{$vo.id}" {if $vo.id == $formData.Org_id}selected{/if} >{$vo.Org_N}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="pageform">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+
+            </form>
+            <div class = "layui-row layui-col-space10">
+                <div class = "layui-col-log6 layui-col-md6 ">
+                    <table id = "cirShiftsTable"></table>
+                    <div id="cirShiftsTePager"></div>
+                </div>
+
+                <div class = "layui-col-log6 layui-col-md6">
+                    <table id = "allShiftsTable"></table>
+                    <div id="allShiftsPager"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    var circleDetail = {$circleDetail|raw};
+    var allShifts = {$allShifts|raw};
+
+    var cirShiftsTable = null;
+    var allShiftsTable = null;
+
+    var beforeProcessing = function () {
+
+    };
+
+    var pagejs = function() {
+        cirShiftsTable = $("#cirShiftsTable").jqGrid({
+            data: circleDetail,
+            datatype: "local",
+            autowidth: true,
+            colModel: [
+                {label: 'id', name: 'id', align: 'center', width: 50},
+                {label: '班别', name: 'sid', align: 'center', width: 50},
+                {label: '使用日历', name: 'cid', align: 'center', width: 80},
+                {label: '顺序', name: 'order', align: 'center', width: 50}
+            ],
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 300,
+            shrinkToFit: false,
+            multiselect: true,
+            gridview: true,
+            scroll: true,
+            toolbar: [true, 'top'],
+            rowNum: circleDetail.length,
+            caption: "上班规则表格",
+            pager: "#cirShiftsTePager",
+            beforeProcessing: beforeProcessing
+        });
+
+        $('#t_cirShiftsTable').append('<button class="ui-button ui-corner-all ui-widget">删除</button>');
+
+        allShiftsTable = $("#allShiftsTable").jqGrid({
+            data: allShifts,
+            datatype: "local",
+            colModel:  [
+                {label: 'id', name: 'id', align: 'center'},
+                {label: '班别代码', name: 'SC', align: 'center'},
+                {label: '班别名称', name: 'SN', align: 'center'},
+                {label:'上下班时间', name: 'Time', align: 'center'},
+                {label:'工时', name: 'duration', align: 'center'}
+            ],
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 300,
+            scroll: true,
+            gridview: true,
+            autowidth: true,
+            rowNum: allShifts.length,
+            multiselect: true,
+            caption: '所有班别',
+            toolbar: [true, 'top'],
+            pager: "#allShiftsPager"
+        });
+
+        $('#t_allShiftsTable').append('<button class="ui-button ui-corner-all ui-widget">添加到当前规则</button>');
+
+        layui.form.on('submit(pageform)', function (data) {
+
+            // $.post('/index/Circle/edit/id/'+data.field.id, '', function (json) {
+            //     // currentOrg = data.value;
+            //     var res = $.parseJSON(json);
+            //     console.log(res);
+            //     alert(res.msg);
+            //     // $('#third_org').html(res.html);
+            //     //location.href='/index/Circle/index/';
+            // }, 'json');
+        });
+    };
+
+
+</script>

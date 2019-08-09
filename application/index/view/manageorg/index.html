@@ -1,0 +1,280 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">班别管理</div>
+        <div class="layui-card-body">
+            <form class = "layui-form" action="" lay_filter = "component-form-element">
+
+                <div class = "layui-row layui-col-space10 layui-form-item">
+                    <div class = "layui-col-log6 layui-col-md3">
+                        <label class = "layui-form-label">一级部门：</label>
+                        <div class="layui-input-block">
+                            <select id="first_org" lay-filter="s1" >
+                                <option value="">请选择</option>
+                                {volist name="first_org" id="vo"}
+                                <option value="{$vo.id}">{$vo.Org_N}</option>
+                                {/volist}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-col-space10 layui-form-item">
+                    <div class = "layui-col-log6 layui-col-md3">
+                        <label class = "layui-form-label">二级部门：</label>
+                        <div class="layui-input-block">
+                            <select id="second_org" lay-filter="s2" >
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-col-space10 layui-form-item">
+                    <div class = "layui-col-log6 layui-col-md3">
+                        <label class = "layui-form-label">三级部门：</label>
+                        <div class="layui-input-block">
+                            <select id="third_org" lay-filter="s3" >
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+            <div class = "layui-row layui-col-space10">
+                <div class = "layui-col-log6 layui-col-md6" id = "shiftsTableWrap">
+                    <table id="shiftsTable" lay-filter="test"></table>
+                    <div id="shiftsPager"></div>
+                </div>
+                <div class = "layui-col-log6 layui-col-md6" id = "allShiftsWrap">
+                    <table id="allShifts" lay-filter="test"></table>
+                    <div id="allShiftsPager"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var currentOrg = null;
+    var shiftsTable = null;
+    var shifts = {$shifts|raw};
+
+    var editRow = function(id) {
+        $('#allShifts').jqGrid('editRow',id, {
+            keys: true,
+            url: '/index/Manageorg/editAndAdd',
+            aftersavefunc: function (rowid, response) {
+                $('#allShifts').jqGrid().trigger('reloadGrid');
+                console.log($.parseJSON(response.responseJSON).msg);
+            }
+        });
+    };
+
+    var editOrder = function (id) {
+        $('#shiftsTable').jqGrid('editRow',id, {
+            keys: true,
+            url: '/index/Manageorg/editOrder',
+            aftersavefunc: function (rowid, response) {
+                $('#shiftsTable').jqGrid().trigger('reloadGrid');
+                console.log($.parseJSON(response.responseJSON).msg);
+            }
+        });
+    };
+
+    var pagejs = function() {
+        $.extend($.fn.fmatter , {
+            shiftFormatter: function (cellvalue, object, rowdata) {
+                return shifts[cellvalue];
+            }
+        });
+
+        $("#allShifts").jqGrid({
+            url: '/index/Manageorg/getAllShifts',
+            datatype: 'json',
+            colModel:  [
+                {label: 'id', name: 'id', align: 'center'},
+                {
+                    label: '班别代码',
+                    name: 'SC',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label: '班别名称',
+                    name: 'SN',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label:'上下班时间',
+                    name: 'Time',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label:'工时',
+                    name: 'duration',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                }
+            ],
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 500,
+            scroll: true,
+            gridview: true,
+            autowidth: true,
+            rowNum: 20,
+            multiselect: true,
+            caption: '所有班别',
+            toolbar: [true, 'top'],
+            pager: "#allShiftsPager",
+            beforeProcessing: function (data) {
+                $('#allShifts').jqGrid('setGridParam', {
+                    rowNum: data.length
+                });
+            },
+            ondblClickRow: editRow,
+            onSelectRow: function () {
+                selected = $("#allShifts").jqGrid('getGridParam','selarrrow');
+                var myButton = $('#allShiftsWrap .my-toolbar-remove');
+                if(selected.length > 0)
+                {
+                    myButton.prop('disabled', false);
+                }
+                else
+                {
+                    myButton.prop('disabled', true);
+                }
+
+                myButton = $('#allShiftsWrap .my-toolbar-addToLeft');
+                if(selected.length > 0 && currentOrg !== null)
+                {
+                    myButton.prop('disabled', false);
+                }
+                else
+                {
+                    myButton.prop('disabled', true);
+                }
+            }
+        });
+
+        $('#t_allShifts').append('<button class="ui-button ui-corner-all ui-widget my-toolbar-addToLeft" disabled = true>添加到当前部门</button>' +
+            '<button class="ui-button ui-corner-all ui-widget my-toolbar-add">添加新班别</button>' +
+            '<button class="ui-button ui-corner-all ui-widget my-toolbar-remove" data-url = "/index/Manageorg/shiftDel" data-table = "allShifts" disabled = true >删除</button>');
+
+        shiftsTable = $("#shiftsTable").jqGrid({
+            url: '/index/Manageorg/getShiftsTable',
+            datatype: 'json',
+            postData: {key: currentOrg},
+            colModel: [
+                {label: 'id', name: 'id', align: 'center'},
+                {label: 'sid', name: 'sid', align: 'center'},
+                {label: 'sid', name: 'sid', align: 'center', formatter: 'shiftFormatter'},
+                {label: '所属组织', name: 'Org_id', align: 'center'},
+                {label:'显示顺序', name: 'order', align: 'center', editable: true, edittype: 'text'}
+            ],
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 500,
+            scroll: true,
+            gridview: true,
+            autowidth: true,
+            multiselect: true,
+            toolbar: [true, 'top'],
+            caption: '班别列表',
+            pager: "#shiftsPager",
+            ondblClickRow: editOrder,
+            onSelectRow: function () {
+                selected = $("#shiftsTable").jqGrid('getGridParam','selarrrow');
+                var myButton = $('#shiftsTableWrap .my-toolbar-remove');  //problem here
+                if(selected.length > 0)
+                {
+                    myButton.prop('disabled', false);
+                }
+                else
+                {
+                    myButton.prop('disabled', true);
+                }
+            }
+        });
+
+        $('#t_shiftsTable').append('<button class="ui-button ui-corner-all ui-widget my-toolbar-remove" data-table = "shiftsTable" data-url = "/index/Manageorg/oshiftDel" disabled = true>删除</button>');
+
+        layui.form.on('select(s1)', function (data) {
+
+            $.post('/index/Manageorg/getOrgs', {key: data.value}, function (json) {
+                var res = $.parseJSON(json);
+                $('#second_org').html(res.html);
+                $('#third_org').empty();
+                currentOrg = data.value;
+
+                layui.form.render('select');
+                $("#shiftsTable").jqGrid('setGridParam', {
+                    postData: {key: currentOrg}
+                }).trigger("reloadGrid");
+            }, 'json');
+
+        });
+
+        layui.form.on('select(s2)', function (data) {
+
+            $.post('/index/Manageorg/getOrgs', {key: data.value }, function (json) {
+                var res = $.parseJSON(json);
+                $('#third_org').html(res.html);
+                currentOrg = data.value;
+
+                $("#shiftsTable").jqGrid('setGridParam', {
+                    postData: {key: currentOrg}
+                }).trigger("reloadGrid");
+
+                layui.form.render('select');
+
+            }, 'json');
+        });
+
+        layui.form.on('select(s3)', function (data) {
+
+            $.post('/index/Manageorg/getOrgs', {key: data.value}, function (json) {
+                var res = $.parseJSON(json);
+                currentOrg = data.value;
+
+                $("#shiftsTable").jqGrid('setGridParam', {
+                    postData: {key: currentOrg}
+                }).trigger("reloadGrid");
+            }, 'json');
+
+        });
+
+        $('.my-toolbar-addToLeft').on('click', function () {
+            var selected = $("#allShifts").jqGrid('getGridParam','selarrrow');
+
+            $.post('/index/Manageorg/addShiftsToOrg', {org: currentOrg, shifts: selected}, function (json) {
+                var res = $.parseJSON(json);
+
+                $("#shiftsTable").jqGrid('setGridParam', {
+                    postData: {key: currentOrg}
+                }).trigger("reloadGrid");
+
+            }, 'json');
+        });
+
+        $('.my-toolbar-add').on('click', function (event) {
+            $('#allShifts').jqGrid('addRow' , {
+                useFormatter: true
+            });
+        });
+
+    };
+
+    var pageresize = function () {
+        var width = $('#shiftsTableWrap').width();
+        $("#shiftsTable").jqGrid('setGridWidth', width);
+        width = $('#allShiftsWrap').width();
+        $("#allShifts").jqGrid('setGridWidth', width);
+    };
+
+</script>

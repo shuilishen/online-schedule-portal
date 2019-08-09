@@ -1,0 +1,53 @@
+.layui-table th{
+    text-align: center;
+}
+
+.cellwarp{
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.my-tag
+{
+    border: 1px solid #000;
+    padding: 2px;
+    cursor: move;
+}
+
+.my-tag-member
+{
+    border: 1px solid #000;
+    padding: 4px;
+    margin: 4px;
+    cursor: move;
+    border-radius: 4px;
+}
+
+.my-tag-day{
+    border: 1px solid #000;
+    padding: 2px;
+    cursor: move;
+    border-radius: 4px;
+}
+
+.my-tag-delete
+{
+    background: #e0eaf1;
+    cursor: pointer;
+    border-radius: 0 2px 2px 0;
+    padding-left: 3px;
+    padding-right: 4px;
+}
+
+.my-tag-selected
+{
+    background-color: cornflowerblue;
+}
+
+.drop-active{
+    border-style: dashed;
+}
+
+.drop-hover{
+    border-color: #00FF00;
+}

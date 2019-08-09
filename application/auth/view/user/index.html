@@ -2,65 +2,111 @@
     <div class="layui-card">
         <div class="layui-card-header">管理用户</div>
         <div class="layui-card-body">
-            <div>
-                <a type="button" class="layui-btn" href="/auth/User/add">
-                    <i class="layui-icon">&#xe608;</i> 新建
-                </a>
-            </div>
-            <div>
-                <table id="demo" lay-filter="test"></table>
+            <div class = "layui-row layui-col-space30">
+                <div class = "layui-col-log12 layui-col-md12" id = "userTableWrap">
+                    <table id = "userTable"></table>
+                    <div id="userPager"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<script type="text/html" id="toolbar">
-    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
-    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
-</script>
 <script>
-    var groups={{$gpstr|raw}};
+    var userTable = null;
+    var groups={$groups|raw};
+    var groupsString = JSON.stringify(groups);
+    var replace = new RegExp(',', 'g');
     console.log(groups);
+
+    var editRow = function(id) {
+        $('#userTable').jqGrid('editRow',id, {
+            keys: true,
+            url: '/auth/User/editAndAdd',
+            aftersavefunc: function (rowid, response) {
+                $('#userTable').jqGrid().trigger('reloadGrid');
+                console.log($.parseJSON(response.responseJSON));
+            }
+        });
+    };
+
     var pagejs = function()
     {
-        layui.use('table', function(){
-            var table = layui.table;
+        $.extend($.fn.fmatter , {
+            userGroupFormatter: function (cellvalue, object, rowdata) {
+                return groups[cellvalue];
+            }
+        });
 
-            //第一个实例
-            table.render({
-                elem: '#demo'
-                ,url:'/auth/User/listdata'
-                ,page: true //开启分页
-                ,cols: [[ //表头
-                    {field: 'id', title: 'ID',  sort: true, fixed: 'left'}
-                    ,{field: 'EID', title: '工号', sort: true}
-                    ,{field: 'email', title: '企业邮箱', sort: true}
-                    ,{field: 'password', title: '密码', sort: true}
-                    ,{field: 'AUID', title: '用户组ID', sort: true}
-                    ,{field: 'AUID', title: '用户组', sort: true, templet: function (a){
-                        if(undefined!==groups[a.AUID]){
-                            return groups[a.AUID];
-                        }
-                            return a.AUID;
-                    }}
-                    ,{field: 'listorder', title: '显示顺序', sort: true}
-                    ,{field: 'opt', title: '操作', toolbar:'#toolbar'}
-                ]]
-            });
-
-            //监听工具条
-            table.on('tool(test)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
-                var data = obj.data; //获得当前行数据
-                var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
-                var tr = obj.tr; //获得当前行 tr 的DOM对象
-
-                if(layEvent === 'del'){ //删除
-                    layer.confirm('真的删除行么', function(index){
-                        location.href='/auth/User/del/id/'+data.id;
-                    });
-                } else if(layEvent === 'edit'){ //编辑
-                    //do something
-                    location.href='/auth/User/edit/id/'+data.id;
+        userTable = $("#userTable").jqGrid({
+            url: '/auth/User/getUserData',
+            datatype: 'json',
+            height: 500,
+            colModel: [
+                { label: 'id', name: 'id', align: 'center'},
+                {
+                    label: '工号',
+                    name: 'eid',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label: '企业邮箱',
+                    name: 'email',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label: '姓名',
+                    name: 'name',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label: '密码',
+                    name: 'pwd',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label: '页面权限',
+                    name: 'mid',
+                    align: 'center',
+                    editable: true,
+                    edittype: 'text'
+                },
+                {
+                    label: '用户组',
+                    name: 'auid',
+                    align: 'center',
+                    editable: true,
+                    formatter: 'select',
+                    edittype: 'select',
+                    editoptions: {value: groupsString.replace(replace,';').replace(/[{|}|"]/g, '')}
                 }
+            ],
+            ajaxRowOptions: {
+                async: true
+            },
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            gridview: true,
+            scroll: true,
+            multiselect: true,
+            toolbar: [true, 'top'],
+            ondblClickRow: editRow,
+            pager: "#userPager",
+            caption: "用户名单"
+        });
+
+        $('#t_userTable').append('<button class="ui-button ui-corner-all ui-widget my-toolbar-add" data-url = "/auth/User/add">新建</button>' +
+            '<button class="ui-button ui-corner-all ui-widget my-toolbar-remove" data-url = "/auth/User/del" data-table = "userTable" disabled = true>删除</button>');
+
+        $('.my-toolbar-add').on('click', function (event) {
+            $('#userTable').jqGrid('addRow' , {
+                useFormatter: true
             });
         });
     }

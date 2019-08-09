@@ -1,0 +1,66 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header"></div>
+        <div class="layui-card-body">
+            <div class = "layui-row">
+                <div class = "layui-col-lg12 layui-col-md12 layui-inline" id = "targetTableWrap">
+                    <table id = "targetTable"></table>
+                    <div id="targetPager"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var targetTable = null;
+    var layerjs = function (res) {
+        $.extend($.fn.fmatter , {
+            // daysFormatter: function (cellvalue, object, rowdata) {
+            //     return '<span class="my-tag-day" data-id="'+rowdata.id+'">'+cellvalue+'</span>';
+            // }
+        });
+
+        targetTable = $("#targetTable").jqGrid({
+            data: res.data,
+            datatype: 'local',
+            colModel: res.colModel,
+            colNames: res.colNames,
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 500,
+            shrinkToFit: false,
+            gridview: true,
+            scroll: true,
+            rowNum: res.data.length,
+            caption: "上班规则表格",
+            pager: "#targetPager",
+            loadComplete:  function (data) {
+                layerresize();
+            }
+        });
+
+        $('#targetTable').setGroupHeaders({
+            useColSpanStyle: true,
+            groupHeaders: res.groupHeaders
+        });
+        //
+        // $('#t_targetTable').append('<button id = "output" class="ui-button ui-corner-all ui-widget" >导出</button>');
+        //
+        // $('#output').on('click', function (event) {
+        //     $("#targetTable").jqGrid("exportToExcel",{
+        //         includeLabels : true,
+        //         includeGroupHeader : true,
+        //         includeFooter: false,
+        //         fileName : "jqGridExport.xlsx",
+        //         maxlength : 40 // maxlength for visible string data
+        //     })
+        // });
+    };
+
+    var layerresize = function () {
+        var width = $('#targetTableWrap').width();
+        $("#targetTable").jqGrid('setGridWidth', width);
+    };
+
+
+</script>

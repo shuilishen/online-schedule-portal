@@ -3,67 +3,650 @@
         <div class="layui-card-header">排班系统</div>
         <div class="layui-card-body">
 
-            <form class = "layui-form" action="" lay_filter = "component-form-element">
-                <div class = "layui-row layui-form-item">
-                    <div class = "layui-col-lg6 layui-col-md3 layui-inline">
-                        <label class = "layui-form-label" >选择岗位：</label>
+            <form class="layui-form layui-form-pane" action="">
+                <div class="layui-row layui-form-item">
+                    <div class = "layui-col-lg3 layui-col-md3 layui-inline">
+                        <label class="layui-form-label">排班月份</label>
                         <div class="layui-input-block">
-                            <select id = "PID" class="layui-select layui-input" lay-filter = "position" >
-                                {volist name="positions" id="vo"}
-                                <option value='{$vo.id}' {if $vo.id == $default_PID}selected{/if}>{$vo.PN}</option>
-                                {/volist}
+                            <input type="text" class="layui-input" id="month"ba>
+                        </div>
+                    </div>
+
+                    <div class = "layui-col-lg2 layui-col-md2">
+                        <div>
+                            <a type="button" class="layui-btn my-layer-tt my-button" data-title="浏览此月排班excel表格" data-url = "/paiban/Index/targetTablePage">
+                                <i class="layui-icon" >&#xe608;</i>浏览此月排班excel表格
+                            </a>
+                        </div>
+                        <div id = "myiframe" style="display: none"></div>
+                    </div>
+
+                    <div class = "layui-col-lg2 layui-col-md2">
+                        <div>
+                            <a type="button" class="layui-btn my-button" id ="output"  data-url = "/paiban/Output/index">
+                                <i class="layui-icon" >&#xe608;</i>输出此月excel表格(.xlsx)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-form-item">
+                    <div class = "layui-col-lg3 layui-col-md3 layui-inline">
+                        <label class = "layui-form-label" >一级部门</label>
+                        <div class="layui-input-block">
+                            <select id = "org1" class="layui-select layui-input" lay-filter = "org_s1">
+
                             </select>
                         </div>
+                    </div>
+                </div>
 
+                <div class = "layui-row layui-form-item">
+                    <div class = "layui-col-lg3 layui-col-md3 layui-inline">
+                        <label class = "layui-form-label" >二级部门</label>
+                        <div class="layui-input-block">
+                            <select id = "org2" class="layui-select layui-input" lay-filter = "org_s2">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-form-item">
+                    <div class = "layui-col-lg3 layui-col-md3 layui-inline">
+                        <label class = "layui-form-label" >三级部门</label>
+                        <div class="layui-input-block">
+                            <select id = "org3" class="layui-select layui-input" lay-filter = "org_s3">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class = "layui-row layui-form-item">
+                    <div class = "layui-col-lg12 layui-col-md12 layui-inline">
+                        <label class = "layui-form-label" >自动填充</label>
+                        <div class="layui-input-block"  id = "circles">
+                        </div>
                     </div>
                 </div>
             </form>
 
-            <div class = "layui-row">
-                <div class = "layui-col-log6 layui-col-md8" id="tablewrap">
-                        <table id="paibanTable"></table>
+            <div class = "layui-row layui-col-space30">
+                <div class = "layui-col-log9 layui-col-md9" id = "workTableWrap">
+                    <table id = "workflowTable"></table>
+                    <div id="workflowPager"></div>
+                </div>
+
+                <div class = "layui-col-log3 layui-col-md3" id = "memTableWrap">
+                    <table id = "memberTable"></table>
+                    <div id="memberPager"></div>
                 </div>
 
             </div>
-
         </div>
     </div>
-
 </div>
+
 <script>
-    var tableHead = {$tableHead|raw};
-    var tableData = {$tableData|raw};
+    var org1 = {$org1|raw};
 
-    console.log(tableHead);
-    console.log(tableData);
+    var workflowTable = null;
+    var memberTable = null;
+    var members = {$members|raw};
+    var keyDown = null;
 
-    var toolbar = [{
-        text:'undo',
-        iconCls:'icon-undo',
-        handler:function(){alert('undo')}
-    },'-',{
-        text:'Save',
-        iconCls:'icon-save',
-        handler:function(){alert('save')}
-    }];
+    var currentData = [];
+    var oldData = [];
 
-    var pagejs = function() {
-        table = $("#paibanTable").datagrid({
+    var currentYM = null;
+    var currentOrg = null;
 
-            columns: tableHead,
-            data: tableData,
-            height: 'auto',
-            fitColumns: true,
-            checkOnSelect: false,
-            selectOnCheck: false,
-            singleSelect: true,
-            toolbar:toolbar,
-            scrollbarSize: 0
-        }).datagrid('resize');
+    var circleId = 0;
+
+    var cellattrFuncMapping = {
+        // here we define the implementations of the custom formatter which we use
+        'addMyClassToCell': function (rowId, val, rawObject, cm, rdata) {
+            return 'class = "cellwarp ui-droppable" data-date="'+rdata.date+'"';
+        }
     };
+
     var pageresize = function () {
-        $("#paibanTable").datagrid('resize');
+        var width = $('#workTableWrap').width();
+        $("#workflowTable").jqGrid('setGridWidth', width);
+        width = $('#memTableWrap').width();
+        $("#memberTable").jqGrid('setGridWidth', width);
+    };
+
+    var enableDrop = function () {
+
+        $('.cellwarp').droppable({
+            activeClass: "drop-active",
+            hoverClass: "drop-hover",
+            accept: ".my-tag-day",
+            drop: autoInsert
+        });
+    };
+
+    var enableDrag = function() {
+        $('.my-tag-day').draggable({
+            opacity: 0.8,
+            appendTo: "body",
+            zIndex: 9000,
+            helper: "clone"
+        });
+    };
+
+    var beforeProcessing = function (data, status, xhr) {
+
+        var colModel = $('#workflowTable').jqGrid('getGridParam', 'colModel');
+        var cm = null;
+        for (var i=0; i<colModel.length; i++) {
+            cm = colModel[i];
+            if (cm.hasOwnProperty("cellattr") &&
+                cellattrFuncMapping.hasOwnProperty(cm.cellattr)) {
+                // fix colM[i].formatter from string to the function
+                cm.cellattr = cellattrFuncMapping[cm.cellattr];
+            }
+        }
+    };
+
+    var autoInsert = function (event, ui) {
+        var tempArr = JSON.parse(JSON.stringify(currentData));
+        oldData.push(tempArr);
+        // oldData.push(currentData);
+        // console.log(oldData);
+
+        var tar = $(event.target);
+        var source=$(ui.draggable);
+        var id=source.data('id');
+
+        var row = tar.parent();
+        var targerRowId = $(row).attr('id');
+
+        var colArr = $("#workflowTable").jqGrid('getGridParam', 'colModel');
+
+        var shiftIdString = event.target.getAttribute('aria-describedby').replace('workflowTable_', '');
+        var shiftId = parseInt(shiftIdString, 10);
+
+
+        var days = null;
+        var key;
+        var exist = false;
+        if(circleId == 0)  //normal, insert one people to current cell
+        {
+            exist = false;
+            for(key in currentData[targerRowId-1])
+            {
+                if(key !== 'date' && key !== 'weekDay')
+                {
+                    if(currentData[targerRowId-1][key].indexOf(id) !== -1)
+                    {
+                        exist = true;
+                        break;
+                    }
+                }
+            }
+            if(!exist)
+            {
+                currentData[targerRowId-1][shiftId].push(id);
+                days=parseInt(source.text())+1;
+                source.html(days);
+                $("#workflowTable").jqGrid().trigger('reloadGrid');
+            }
+        }
+        else
+        {
+            $.post('/paiban/Index/getCircleArray', {circleId: circleId}, function (json) {
+
+                var res = $.parseJSON(json);
+                console.log('test');
+                console.log(res);
+                var circle = res.circle;
+
+                var key;
+                var exist = false;
+                var j = circle.indexOf(shiftId);
+                var i = 0, k = 0;
+                if(res.special === true)  //上五休二，上班循环 并跳过周六日
+                {
+                    for(i = targerRowId-1 ; i<currentData.length; i++)
+                    {
+                        var date = new Date(currentData[i]['date']);
+                        var wday = date.getDay();
+
+                        if(wday > 0 && wday < 6)
+                        {
+                            for(k = 0; k < colArr.length; k++)
+                            {
+                                if(colArr[k]['name'] === res.circle[j])
+                                {
+                                    exist = false;
+                                    for(key in currentData[i])
+                                    {
+                                        if(key !== 'date' && key !== 'weekDay')
+                                        {
+                                            if(currentData[i][key].indexOf(id) !== -1)
+                                            {
+                                                exist = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    // if(currentData[i][res.circle[j]].indexOf(id) === -1)
+                                    // {
+                                    //     currentData[i][res.circle[j]].push(id);
+                                    //     days=parseInt(source.text())+1;
+                                    //     source.html(days);
+                                    // }
+
+                                    if(!exist)
+                                    {
+                                        currentData[i][res.circle[j]].push(id);
+                                        days=parseInt(source.text())+1;
+                                        source.html(days);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        j++;
+                        if(j === res.circle.length)
+                            j = 0;
+                    }
+                }
+                else {
+                    for (i = targerRowId - 1; i < currentData.length; i++) {
+                        for (k = 2; k < colArr.length; k++) {
+                            if (colArr[k]['name'] === res.circle[j]) {
+                                exist = false;
+                                for(key in currentData[i])
+                                {
+                                    if(key !== 'date' && key !== 'weekDay')
+                                    {
+                                        if(currentData[i][key].indexOf(id) !== -1)
+                                        {
+                                            exist = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if(!exist)
+                                {
+                                    currentData[i][res.circle[j]].push(id);
+                                    days=parseInt(source.text())+1;
+                                    source.html(days);
+                                }
+                                break;
+                            }
+                        }
+                        j++;
+                        if (j === res.circle.length)
+                            j = 0;
+                    }
+                }
+                $("#workflowTable").jqGrid().trigger('reloadGrid');
+            });
+        }
+    };
+
+    function reloadTableData(currentData) {
+        var myTable = $("#workflowTable");
+        myTable.jqGrid('clearGridData');
+        myTable.jqGrid('setGridParam', {data: currentData});
+        myTable.trigger( 'reloadGrid' );
     }
 
+    function reloadTables(res) {
+        currentData = res.data;
+
+        if(workflowTable !== null)
+            $.jgrid.gridUnload('workflowTable');
+
+        workflowTable = $("#workflowTable").jqGrid({
+            data: currentData,
+            autowidth: true,
+            datatype: "local",
+            colModel: res.colModel,
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 500,
+            shrinkToFit: false,
+            gridview: true,
+            scroll: true,
+            toolbar: [true, 'top'],
+            rowNum: res.data.length,
+            caption: "排班表格",
+            beforeProcessing: beforeProcessing,
+            loadComplete: enableDrop,
+            gridComplete: function () {
+                $('.my-toolbar-save').off().on('click', function (event) {
+                    $.post('/paiban/Index/saveWorkflowData', {data: currentData, org: currentOrg}, function (json) {
+
+                    });
+                });
+
+                $('.my-toolbar-undo').off().on('click', function (event) {
+                    console.log('test');
+                    if(oldData.length !== 0)
+                    {
+                        currentData = JSON.parse(JSON.stringify(oldData.pop()));
+                        reloadTableData(currentData);
+                    }
+                });
+
+                $('.my-tag-member').off().on('click', function (event) {
+                    //console.log(keyDown);
+                    if(keyDown === 65)
+                    {
+                        //select all tag with same memid
+                        var id = $(this).data('id');
+                        $('.my-tag-member[data-id = '+id+']').toggleClass('my-tag-selected');
+                    }
+                    else if(keyDown === 83)
+                    {
+                        //select single
+                        //$(this).addClass('my-tag-selected');
+                        $(this).toggleClass('my-tag-selected');
+                    }
+                    else if(keyDown === null)
+                    {
+
+                    }
+                });
+            }
+        });
+
+        $('#workflowTable').setGroupHeaders({
+            useColSpanStyle: true,
+            groupHeaders: res.groupHeaders
+        });
+
+        $('#t_workflowTable').append('<button class="ui-button ui-corner-all ui-widget my-toolbar-undo">撤销</button>' +
+            '<button class="ui-button ui-corner-all ui-widget">重置</button>' +
+            '<button class="ui-button ui-corner-all ui-widget my-toolbar-save">保存</button>');
+
+        if(memberTable !== null)
+            $.jgrid.gridUnload('memberTable');
+
+        memberTable = $("#memberTable").jqGrid({
+            datatype: "local",
+            data: res.memListData,
+            height: 500,
+            colModel: [
+                { label: '已排天数', name: 'days', align: 'center', width: 70, formatter: 'daysFormatter' },
+                { label: 'id', name: 'id', width: 50, align: 'center', key:true},
+                { label: '工号', name: 'eid', align: 'center', width: 70 },
+                { label: '姓名', name: 'name', align: 'center', width: 100 }
+            ],
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            gridview: true,
+            scroll: true,
+            multiselect: true,
+            pager: "#memberPager",
+            caption: "人员名单",
+            loadComplete: enableDrag
+        });
+    }
+
+    var deleteData = function (data) {
+        var days = null;
+        for(var i=0; i<data.length; i++)
+        {
+            var dayTag = $(".my-tag-day[data-id="+data[i].id+"]");
+
+            days=parseInt(dayTag.text())-1;
+            dayTag.text(days);
+            currentData[(data[i].rowId)-1][data[i].shiftId] = currentData[(data[i].rowId)-1][data[i].shiftId].filter(function (elem) {
+                return elem !== data[i].id;
+            });
+        }
+
+        $("#workflowTable").jqGrid().trigger('reloadGrid');
+    };
+
+    var pagejs = function() {
+
+        var monthSelect = layui.laydate.render({
+            elem: '#month',
+            type: 'month',
+            format: 'yyyy-MM',
+            showBottom: true,
+            done: function(value, date){ //监听日期被切换
+                currentYM = value+'-01';
+                $('#org1').html(org1);
+                layui.form.render('select');
+            }
+        });
+
+        $(document).keydown(function(event){
+
+            if(event.keyCode === 65) //a
+                keyDown = event.keyCode;
+            else if(event.keyCode === 83) //s
+                keyDown = event.keyCode;
+            else if(event.keyCode === 8) //backspace
+            {
+                var selectedTag = $('.my-tag-selected');
+                var data = new Array() ;
+                for(var i = 0; i< selectedTag.length; i++ )
+                {
+                    data[i] = {
+                        id: $(selectedTag[i]).data('id'),
+                        date: $(selectedTag[i]).parent().data('date'),
+                        rowId: $(selectedTag[i]).parent().parent().attr('id'),
+                        shiftId: $(selectedTag[i]).data('sid')
+                    };
+                }
+
+                deleteData(data);
+            }
+            //control 17
+        });
+
+        $(document).keyup(function(event){
+            if(event.keyCode === 65)
+                keyDown = null;
+            else if(event.keyCode === 83)
+                keyDown = null;
+            else if(event.keyCode === 8)
+                keyDown = null;
+        });
+
+        $.extend($.fn.fmatter , {
+            memberFormatter : function(cellvalue, object, rowdata) {
+                if(cellvalue === [])
+                    return '';
+                else if(cellvalue.length === 1)
+                {
+                    return '<span class="my-tag-member" data-id="'+cellvalue+'" data-sid="'+object.colModel.name+'">'+members[cellvalue].name+'</span>';
+                }
+                else
+                {
+                    var html = '';
+                    for(var i =0; i<cellvalue.length; i++)
+                    {
+                        html = html + '<span class="my-tag-member" data-id="'+cellvalue[i]+'" data-sid="'+object.colModel.name+'">'+members[cellvalue[i]].name+'</span>';
+                    }
+                    return html;
+                }
+            },
+            daysFormatter: function (cellvalue, object, rowdata) {
+                return '<span class="my-tag-day" data-id="'+rowdata.id+'">'+cellvalue+'</span>';
+            }
+        });
+
+
+        layui.form.on('select(org_s1)', function (data) {
+            if(data.value !== '')
+            {
+                $('select#org1').attr('disabled', true);
+                layui.form.render('select');
+                $.post('/paiban/Index/getSelectionAndTables', {key: data.value, YM: currentYM}, function (json) {
+                    currentOrg = data.value;
+                    var res = $.parseJSON(json);
+                    reloadTables(res);
+
+                    $('select#org2').html(res.org);
+                    $('select#org3').empty();
+
+                    $('#circles').html(res.circle);
+                    $('select#org1').removeAttr('disabled');
+
+                    layui.form.render('select');
+                    layui.form.render('radio');
+                });
+            }
+        });
+
+        layui.form.on('select(org_s2)', function (data) {
+            if(data.value !== '')
+            {
+                $('select#org2').attr('disabled', true);
+                layui.form.render('select');
+                $.post('/paiban/Index/getSelectionAndTables', {key: data.value, YM: currentYM}, function (json) {
+                    currentOrg = data.value;
+                    var res = $.parseJSON(json);
+                    reloadTables(res);
+
+                    $('select#org3').html(res.org);
+
+                    $('#circles').html(res.circle);
+                    $('select#org2').removeAttr('disabled');
+
+                    layui.form.render('select');
+                    layui.form.render('radio');
+                });
+            }
+        });
+
+        layui.form.on('select(org_s3)', function (data) {
+            if(data.value !== '')
+            {
+                $('select#org3').attr('disabled', true);
+                layui.form.render('select');
+                $.post('/paiban/Index/getSelectionAndTables', {key: data.value, YM: currentYM}, function (json) {
+                    if(data.value !== '')
+                        currentOrg = data.value;
+                    console.log(currentOrg);
+                    var res = $.parseJSON(json);
+                    reloadTables(res);
+
+                    $('#circles').html(res.circle);
+                    $('select#org3').removeAttr('disabled');
+
+                    layui.form.render('select');
+                    layui.form.render('radio');
+                }, 'json');
+            }
+        });
+
+        layui.form.on('radio', function (data) {
+            circleId = data.value;
+            //console.log(circleId);
+        });
+
+        $('.my-layer-tt').on('click',function () {
+            if(currentYM !== null)
+            {
+                var t=$(this);
+                var url = t.data('url');
+                var title=t.data('title');
+
+                if(undefined===title || title.length<1){
+                    title=t.text(); //jQuery DOM
+                }
+
+                var res = null;
+                $.get('/paiban/Index/getTargetTableData',{YM: currentYM},function (json) {
+                    res = $.parseJSON(json);
+                    //console.log(res);
+                    $.get(url, '', function (html) {
+                        mylayerIndex = layui.layer.open({
+                            id: 'myLayer',
+                            type: 1,
+                            skin: 'layui-layer-lan',
+                            offset: 'auto',
+                            area: ['1400px', '700px'],
+                            title: title,
+                            content: html,
+                            resizing: function (layero) {
+                                if ("undefined" !== typeof layerresize) {
+                                    layerresize();
+                                }
+                            }
+                        });
+
+                        if ("undefined" !== typeof layerjs) {
+                            layerjs(res);
+                        }
+                    });
+                }, 'json');
+            }
+        });
+
+
+
+        $('#output').on('click', function (event) {
+            console.log(currentYM);
+            if(currentYM !== null)
+            $('#myiframe').html('<iframe src ="/paiban/Output/index/YM/'+currentYM+'" scrolling="no" style="display:none; width:0; height:0">' +
+                '</iframe>');
+            // $.post('/paiban/Output/index/YM/'+currentYM, '', function (json) {
+            //     res = $.parseJSON(json);
+            //     console.log(res);
+            // });
+        });
+    };
+
+
+    // var pageresize = function () {
+    //         var comment = 'resize the table';
+    // }
+
+    // var memberFormatter=function(cellvalue, options, rowObject){
+    //     console.log(cellvalue);
+    //     return 'test';
+    // };
+
+    // var transhtml = function (value) {
+    //     return value.replace(/---/g,"<").replace(/===/g,">");
+    // };
+    //
+    // var transArr=function (arr) {
+    //     var i;
+    //     for (i in arr){
+    //         var t = typeof arr[i];
+    //         if('object' === t){
+    //             arr[i]=transArr(arr[i]);
+    //         }else if('string'===t){
+    //             arr[i]=transhtml(arr[i]);
+    //         }
+    //     }
+    //     return arr;
+    // };
+    //
+    // if(!check)
+    // {
+    //     tar.append('<span class="my-tag-member" data-uid="'+uid+'">'+members[uid].name+'</span>');
+    //     var left=source.text();
+    //     source.html(left-1);
+    // }
+
+    // var updateCellwarpWidth = function () {
+    //
+    //     $('.cellwarp').each(function () {
+    //         // console.log($(this).parent().css('width'));
+    //         // console.log($(this).parent().css('height'));
+    //         $(this).css('width', $(this).parent().css('width'));
+    //         $(this).css('height', $(this).parent().css('height'));
+    //     });
+    //
+    //     // var table = $("#workflowTable")[0];
+    //     // var r = table.rows[0], selftable = table;
+    //     // if (r) {
+    //     //     $("td", r).each(function (k) {
+    //     //         $(this).css('width', selftable.grid.headers[k].width + 'px');
+    //     //     });
+    //     //     table.grid.cols = r.cells;
+    //     // }
+    // };
 
 </script>

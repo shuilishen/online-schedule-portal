@@ -168,9 +168,9 @@
 
         calendar.render();
 
-        layui.$(document).on('click','#add',function(data){
+        $(document).on('click','#add',function(data){
             console.log(addurl);
-            layui.$.get(addurl,function (html) {
+            $.get(addurl,function (html) {
                 layui.layer.open({
                     type: 1,
                     skin: 'layui-layer-lan',

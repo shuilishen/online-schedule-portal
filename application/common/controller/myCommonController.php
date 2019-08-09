@@ -9,7 +9,9 @@
 namespace app\common\controller;
 
 use app\auth\model\Aus;
+use app\auth\model\Groups;
 use app\auth\model\Users;
+use app\index\model\Members;
 use think\Controller;
 use think\view\driver\Think;
 
@@ -59,6 +61,25 @@ class myCommonController extends Controller
             if(count($subMenu['item']) >0 )
                 $menu[]=$subMenu;
         }
+
+        $eid = session('uid');
+        $mem = Users::where('eid', $eid)->find();
+        $group = Groups::where('id', $mem['auid'])->find();
+
+        if($mem['auid'] == 1)
+        {
+            $url = '/my/catPicture1.jpg';
+        }else if($mem['auid'] == 1)
+        {
+            $url = '/my/catPicture2.jpg';
+        }
+        else
+        {
+            $url = '/my/catPicture2.jpg';
+        }
+
+        $this->assign('url', $url);
+        $this->assign('userGroup', $group['title']);
         $this->assign('mainmenu',$menu);
     }
 
@@ -72,14 +93,14 @@ class myCommonController extends Controller
      * @throws \think\exception\DbException
      */
     public function check($un,$pw){
-        $user = Users::where('EID', $un)->find();
+        $user = Users::where('eid', $un)->find();
 
         if(false==$user){
             return false;
         }
-        if($user['password']==$pw){
-            session('uid',$user['EID']);
-            session('auid',$user['Aut_id']);
+        if($user['pwd']==$pw){
+            session('uid',$user['eid']);
+            session('auid',$user['auid']);
             return true;
         }
         return false;

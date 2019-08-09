@@ -1,0 +1,182 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">上班规则管理</div>
+        <div class="layui-card-body">
+
+            <div class = "layui-row layui-col-space10">
+                <div class = "layui-col-log8 layui-col-md8" id = "circleTableWrap">
+
+                    <table id = "circleTable"></table>
+                    <div id="circlePager"></div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var calendars = {$calendars|raw};
+    var ctypes = {$ctypes|raw};
+    var orgs = {$orgs|raw};
+
+    var calendarsString = JSON.stringify(calendars);
+    var ctypesString = JSON.stringify(ctypes);
+    var orgsString = JSON.stringify(orgs);
+
+    console.log(orgs);
+
+    var replace = new RegExp(',', 'g');
+
+    var circleTable = null;
+
+    var colModel = [
+        {label: 'id', name: 'id', align: 'center', key:true},
+        {
+            label: '标题',
+            name: 'title',
+            align: 'center',
+            editable: true,
+            edittype: 'text'
+        },
+        {
+            label: '类别',
+            name: 'type',
+            align: 'center',
+            editable: true,
+            formatter: 'select',
+            edittype: 'select',
+            editoptions: {value: ctypesString.replace(replace,';').replace(/[{|}|"]/g, '')}
+        },
+        {
+            label: '使用日历',
+            name: 'Cal_id',
+            align: 'center',
+            editable: true,
+            formatter: 'select',
+            edittype: 'select',
+            editoptions: {value: calendarsString.replace(replace,';').replace(/[{|}|"]/g, '')}
+        },
+        {
+            label: '所属组织',
+            name: 'Org_id',
+            align: 'center',
+            editable: true,
+            formatter: 'select',
+            edittype: 'select',
+            editoptions: {value: orgsString.replace(replace,';').replace(/[{|}|"]/g, '')}
+        },
+        {label: '操作', name: 'actions', align: 'center', formatter: 'actionFormatter'}
+    ];
+
+    var enableListen = function (data) {
+        $('.my-layer-mcs').off().on('click',function () {
+
+            var t=$(this);
+            var url = t.data('url');
+            var title=t.data('title');
+            var id = t.data('id');
+
+            if(undefined===title || title.length<1){
+                title=t.text(); //jQuery DOM
+            }
+
+            var res = null;
+            $.post('/index/Circle/getLayerData', {key: id}, function (json) {
+                res = $.parseJSON(json);
+                $.get('/index/Circle/manageCirShifts','',function (html) {
+
+                    mylayerIndex = layui.layer.open({
+                        id: 'myLayer',
+                        type: 1,
+                        skin: 'layui-layer-lan',
+                        offset: 'auto',
+                        area: ['1400px', '600px'],
+                        title: title,
+                        content: html,
+                        resizing: function (layero) {
+                            if ("undefined" !== typeof layerresize) {
+                                layerresize();
+                            }
+                        }
+                    });
+
+                    if("undefined"!==typeof layerjs){
+                        layerjs(res, id);
+                    }
+                });
+            },'json');
+
+            // $('#editCirShifts').resize(function(){
+            //     if("undefined"!==typeof layerresize){
+            //         layerresize();
+            //     }
+            // });
+            //layui.form.render();
+        });
+    };
+
+    var editRow = function(id) {
+        $('#circleTable').jqGrid('editRow',id, {
+            keys: true,
+            url: '/index/Circle/editAndAdd',
+            aftersavefunc: function (rowid, response) {
+                $('#circleTable').jqGrid().trigger('reloadGrid');
+                //alert($.parseJSON(response.responseJSON).msg);
+            }
+        });
+    };
+
+    var pagejs = function() {
+        $.extend($.fn.fmatter , {
+            actionFormatter: function(cellvalue, object, rowdata) {
+                return '<button class="ui-button ui-corner-all ui-widget my-layer-mcs"' +
+                    ' data-id = '+rowdata.id+' data-url ="/index/Circle/manageCirShifts" data-title = '+rowdata.title+' >管理班别</button>'
+            }
+        });
+
+        circleTable = $("#circleTable").jqGrid({
+            url: '/index/Circle/getTableData',
+            datatype: 'json',
+            colModel: colModel,
+            ajaxRowOptions: {
+                async: true
+            },
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            height: 500,
+            shrinkToFit: false,
+            multiselect: true,
+            gridview: true,
+            scroll: true,
+            toolbar: [true, 'top'],
+            rowNum: 20,
+            caption: "上班规则表格",
+            pager: "#circlePager",
+            onSelectRow: function () {
+                selected = $("#circleTable").jqGrid('getGridParam','selarrrow');
+                var myButton = $('#circleTableWrap .my-toolbar-remove');  //problem here
+                if(selected.length > 0)
+                {
+                    myButton.prop('disabled', false);
+                }
+                else
+                {
+                    myButton.prop('disabled', true);
+                }
+            },
+            ondblClickRow: editRow,
+            loadComplete: enableListen
+        });
+
+        $('#t_circleTable').append('<button class="ui-button ui-corner-all ui-widget my-toolbar-add">添加</button>' +
+            '<button class="ui-button ui-corner-all ui-widget my-toolbar-remove" data-url = "/index/Circle/cirDel" data-table = "circleTable"  disabled = true>删除</button>');
+
+        $('.my-toolbar-add').on('click', function (event) {
+            $('#circleTable').jqGrid('addRow' , {
+                useFormatter: true
+            });
+        });
+
+
+    };
+</script>

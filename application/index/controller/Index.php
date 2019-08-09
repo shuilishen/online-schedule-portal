@@ -24,9 +24,9 @@ class Index extends myCommonController
     public function index()
     {
         $username = session('uid');
-        $user = Users::where('EID', $username)->find();
+        $user = Users::where('eid', $username)->find();
 
-        if($user['Aut_id'] == config('admin_group')){
+        if($user['auid'] == config('admin_group')){
             $this->redirect('/auth/Group/index');
         }else{
             $this->redirect('/paiban/Index/index');
@@ -63,24 +63,4 @@ class Index extends myCommonController
         }
         $this->checkLogin();
     }
-
-    //---------------------------------------------------------------------------------------------------
-
-    /**
-     * @name    排版
-     * @return mixed
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
-     */
-    public function scheduling()
-    {
-        $org1=Db::table('data_members')->order('Org_C ASC')->select();
-        $this->assign('org1',$org1);
-
-        return $this->fetch('schedule');
-    }
-
-    //---------------------------------------------------------------------------------------
-
 }

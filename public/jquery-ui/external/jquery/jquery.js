@@ -9397,7 +9397,7 @@ jQuery.extend( {
 			json: "responseJSON"
 		},
 
-		// Member converters
+		// Data converters
 		// Keys separate source (or catchall "*") and destination types with a single space
 		converters: {
 

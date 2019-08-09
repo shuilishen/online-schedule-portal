@@ -35,9 +35,21 @@ class Shift extends myCommonController
      */
     public function index()
     {
-        $org = Orgs::order('Org_C ASC')->select();
-        //$org=Db::table('data_organizations')->order('Org_C ASC')->select();
-        $this->assign('org',$org);
+        $orgs = Orgs::order('id', 'ASC')->select();
+        $shifts = Shifts::order('id', 'ASC')->select();
+
+
+        $first_org = array();
+        foreach ($orgs as $key => $value)
+        {
+            if($value['parent_id'] == 1)
+            {
+                $first_org[] = $value;
+            }
+        }
+
+        $this->assign('allShifts', json_encode($shifts));
+        $this->assign('first_org', $first_org);
 
         return $this->fetch();
     }

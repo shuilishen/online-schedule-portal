@@ -1,12 +1,12 @@
 <div class="section" >
     <div class="layui-card">
         <div class="layui-card-body">
-            <form class="layui-form" method="post" action="/index/Data/add" > <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+            <form class="layui-form" method="post" action="/index/Member/add" > <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
 
                 <div class="layui-form-item">
-                    <label class="layui-form-label">EID</label>
+                    <label class="layui-form-label">工号</label>
                     <div class="layui-input-block">
-                        <input type="text" name="EID" placrg_ideholder="请输入" autocomplete="off" class="layui-input">
+                        <input type="text" name="eid" placrg_ideholder="请输入" autocomplete="off" class="layui-input">
                     </div>
                 </div>
 
@@ -30,13 +30,6 @@
                 </div>
 
                 <div class="layui-form-item">
-                    <label class="layui-form-label">显示顺序</label>
-                    <div class="layui-input-block">
-                        <input type="text" name="listorder" placeholder="请输入" autocomplete="off" class="layui-input">
-                    </div>
-                </div>
-
-                <div class="layui-form-item">
                     <div class="layui-input-block">
                         <button class="layui-btn" lay-submit lay-filter="layerform">立即提交</button>
                         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
@@ -49,12 +42,14 @@
 </div>
 
 <script>
-    var tabjs = function() {
+    var layerjs = function() {
 
     };
+
     tabCloseEvent=function (json) {
+
         if(json.code === 1) {
-            layui.table.reload('demo', {});
+            layui.table.reload('member', {});
         }
     }
 </script>

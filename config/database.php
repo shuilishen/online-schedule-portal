@@ -13,13 +13,13 @@ return [
     // 数据库类型
     'type'            => 'mysql',
     // 服务器地址
-    'hostname'        => '10.0.10.6',
+    'hostname'        => '127.0.0.1',
     // 数据库名
-    'database'        => 'sunye',
+    'database'        => 'paiban_cctvnc_cn',
     // 用户名
-    'username'        => 'sunye',
+    'username'        => 'paiban_cctvnc_cn',
     // 密码
-    'password'        => 'sunyepw',
+    'password'        => '6zGemLCRJMMydnPh',
     // 端口
     'hostport'        => '3306',
     // 连接dsn
@@ -60,4 +60,23 @@ return [
     'break_reconnect' => false,
     // 断线标识字符串
     'break_match_str' => [],
+
+    'hr_readonly' => [
+
+        'type' => 'sqlsrv',
+
+        'hostname' => '172.25.7.5',
+
+        'database' => 'ehr',
+
+        'username' => 'nc_api',
+
+        'password' => 'K1EA1JHJxJRVO6u57NpH',
+
+        'hostport' => '1433',
+
+        'charset' => 'utf8',
+
+        'prefix' => 'hr_'
+    ]
 ];

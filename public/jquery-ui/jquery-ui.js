@@ -1,4 +1,4 @@
-/*! jQuery UI - v1.12.1 - 2019-06-23
+/*! jQuery UI - v1.12.1 - 2019-07-31
 * http://jqueryui.com
 * Includes: widget.js, position.js, data.js, disable-selection.js, focusable.js, form-reset-mixin.js, jquery-1-7.js, keycode.js, labels.js, scroll-parent.js, tabbable.js, unique-id.js, widgets/draggable.js, widgets/droppable.js, widgets/resizable.js, widgets/selectable.js, widgets/sortable.js, widgets/accordion.js, widgets/autocomplete.js, widgets/button.js, widgets/checkboxradio.js, widgets/controlgroup.js, widgets/datepicker.js, widgets/dialog.js, widgets/menu.js, widgets/mouse.js, widgets/progressbar.js, widgets/selectmenu.js, widgets/slider.js, widgets/spinner.js, widgets/tabs.js, widgets/tooltip.js, effect.js, effects/effect-blind.js, effects/effect-bounce.js, effects/effect-clip.js, effects/effect-drop.js, effects/effect-explode.js, effects/effect-fade.js, effects/effect-fold.js, effects/effect-highlight.js, effects/effect-puff.js, effects/effect-pulsate.js, effects/effect-scale.js, effects/effect-shake.js, effects/effect-size.js, effects/effect-slide.js, effects/effect-transfer.js
 * Copyright jQuery Foundation and other contributors; Licensed MIT */
@@ -5487,7 +5487,7 @@ var widgetsSortable = $.widget( "ui.sortable", $.ui.mouse, {
 			this._cacheHelperProportions();
 		}
 
-		//Position "activate" events to possible containers
+		//Post "activate" events to possible containers
 		if ( !noActivation ) {
 			for ( i = this.containers.length - 1; i >= 0; i-- ) {
 				this.containers[ i ]._trigger( "activate", event, this._uiHash( this ) );
@@ -5635,7 +5635,7 @@ var widgetsSortable = $.widget( "ui.sortable", $.ui.mouse, {
 			}
 		}
 
-		//Position events to containers
+		//Post events to containers
 		this._contactContainers( event );
 
 		//Interconnect with droppables
@@ -5711,7 +5711,7 @@ var widgetsSortable = $.widget( "ui.sortable", $.ui.mouse, {
 				this.currentItem.show();
 			}
 
-			//Position deactivating events to containers
+			//Post deactivating events to containers
 			for ( var i = this.containers.length - 1; i >= 0; i-- ) {
 				this.containers[ i ]._trigger( "deactivate", null, this._uiHash( this ) );
 				if ( this.containers[ i ].containerCache.over ) {
@@ -5984,7 +5984,7 @@ var widgetsSortable = $.widget( "ui.sortable", $.ui.mouse, {
 			for ( j = 0, queriesLength = _queries.length; j < queriesLength; j++ ) {
 				item = $( _queries[ j ] );
 
-				// Member for target checking (mouse manager)
+				// Data for target checking (mouse manager)
 				item.data( this.widgetName + "-item", targetData );
 
 				items.push( {
@@ -6655,7 +6655,7 @@ var widgetsSortable = $.widget( "ui.sortable", $.ui.mouse, {
 			}
 		}
 
-		//Position events to containers
+		//Post events to containers
 		function delayEvent( type, instance, container ) {
 			return function( event ) {
 				container._trigger( type, event, instance._uiHash( instance ) );

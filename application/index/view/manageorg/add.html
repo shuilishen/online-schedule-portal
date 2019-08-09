@@ -1,0 +1,92 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <form class="layui-form" method="post" action="/index/Manageorg/add" > <!-- 提示：如果你不想用form，你可以换成div等任何一个普通元素 -->
+
+                <div class = "layui-form-item">
+                    <label class="layui-form-label">班别代码</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="SC" placrg_ideholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+
+                <div class = "layui-form-item">
+                    <label class="layui-form-label">班别名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="SN" placeholder="请输入" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+
+                <div class = "layui-form-item">
+                    <label class = "layui-form-label">一级部门</label>
+                    <div class="layui-input-block">
+                        <select id="org1" lay-filter="layer_s1" >
+                            <option value="">请选择</option>
+                            {volist name="first_org" id="vo"}
+                            <option value="{$vo.id}">{$vo.Org_N}</option>
+                            {/volist}
+                        </select>
+                    </div>
+                </div>
+
+                <div class = "layui-form-item">
+                    <label class = "layui-form-label">二级部门</label>
+                    <div class="layui-input-block">
+                        <select id="org2" lay-filter="layer_s2" >
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class = "layui-form-item">
+                    <label class = "layui-form-label">三级部门</label>
+                    <div class="layui-input-block">
+                        <select id="org3" lay-filter="layer_s3" >
+                        </select>
+                    </div>
+                </div>
+
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="layerform">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var tabjs = function() {
+        layui.form.on('select(layer_s1)', function (data) {
+            console.log(data.value);
+            layui.$.post('/index/Manageorg/getOrgsAndShifts', {key: data.value }, function (json) {
+                var res = layui.$.parseJSON(json);
+                $('#org2').html(res.html);
+                $('#org3').empty();
+                layui.form.render('select');
+            }, 'json');
+
+        });
+
+        layui.form.on('select(layer_s2)', function (data) {
+            layui.$.post('/index/Manageorg/getOrgsAndShifts', {key: data.value }, function (json) {
+                var res = layui.$.parseJSON(json);
+                $('#org3').html(res.html);
+                layui.form.render('select');
+            }, 'json');
+        });
+    };
+
+    tabCloseEvent=function (json) {
+
+        if(json.code === 1) {
+            layui.table.reload('shifts', {});
+        }
+    }
+
+
+</script>

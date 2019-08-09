@@ -29,16 +29,22 @@ class Group extends myCommonController
     }
 
     /**
-     * @name    列表
-     * @return array
+     * @return array|\PDOStatement|string|\think\Collection
+     * @throws \think\exception\DbException
+     * @throws db\exception\DataNotFoundException
+     * @throws db\exception\ModelNotFoundException
      */
-    public function listdata(){
-        $groups=Groups::select();
-        if($groups && count($groups)>0)
-            return ['code'=>0,'msg'=>'','count'=>count($groups),'data'=>$groups];
-        else
-            return ['code'=>301,'msg'=>'没有数据','count'=>0,'data'=>[]];
+    public function getGroupData()
+    {
+        return Groups::order('id', 'ASC')->select();
     }
+
+    public function editAndAdd()
+    {
+
+
+    }
+
 
     /**
      * @name    添加

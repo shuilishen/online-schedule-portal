@@ -1,0 +1,191 @@
+<div class="section" >
+    <div class="layui-card">
+        <div class="layui-card-header">上班规则管理</div>
+        <div class="layui-card-body">
+
+            <div class = "layui-row layui-col-space10" >
+
+                <div class = "layui-col-log6 layui-col-md6" id = "shiftsTableWrap">
+                    <table id = "shiftsTable"></table>
+                    <div id="shiftPager"></div>
+                </div>
+
+                <div class = "layui-col-log6 layui-col-md6" id = "allShiftTableWrap">
+                    <table id = "allShiftTable"></table>
+                    <div id="allShiftPager"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var shiftsTable = null;
+    var allShiftTable = null;
+    var selectedAS = [];
+    var selected = [];
+
+    var cshiftModel = [
+        {label: 'id', name: 'id', align: 'center', key:true},
+        {label: 'sid', name: 'sid', align: 'center'},
+        {
+            label: 'SC',
+            name: 'SC',
+            align: 'center'
+        },
+        {
+            label: '班别',
+            name: 'SN',
+            align: 'center'
+        },
+        {
+            label: '上下班时间',
+            name: 'Time',
+            align: 'center'
+        },
+        {
+            label: '工时',
+            name: 'duration',
+            align: 'center'
+        },
+        {
+            label: '顺序',
+            name: 'order',
+            align: 'center',
+            editable: true,
+            edittype: 'text'
+        }
+    ];
+
+    var allShiftModel = [
+        {label: 'id', name: 'id', align: 'center', key:true},
+        {
+            label: 'SC',
+            name: 'SC',
+            align: 'center'
+        },
+        {
+            label: '班别',
+            name: 'SN',
+            align: 'center'
+        },
+        {
+            label: '上下班时间',
+            name: 'Time',
+            align: 'center'
+        },
+        {
+            label: '工时',
+            name: 'duration',
+            align: 'center'
+        }
+    ];
+
+
+    var editRow = function(id) {
+        $('#shiftsTable').jqGrid('editRow',id, {
+            keys: true,
+            url: '/index/Circle/editCirShift',
+            aftersavefunc: function (rowid, response) {
+                $('#shiftsTable').jqGrid().trigger('reloadGrid');
+                alert($.parseJSON(response.responseJSON).msg);
+            }
+        });
+    };
+
+    var layerjs = function(res, id){
+
+        shiftsTable = $("#shiftsTable").jqGrid({
+            url: '/index/Circle/getCirShiftsData',
+            datatype: 'json',
+            postData: {key: id},
+            colModel: cshiftModel,
+            height: 300,
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            shrinkToFit: false,
+            multiselect: true,
+            gridview: true,
+            scroll: true,
+            toolbar: [true, 'top'],
+            rowNum: 20,
+            caption: "当前规则",
+            pager: "#shiftPager",
+            onSelectRow: function () {
+                selected = $("#shiftsTable").jqGrid('getGridParam','selarrrow');
+                var myButton = $('#myLayer .my-toolbar-remove');
+                if(selected.length > 0)
+                {
+                    myButton.prop('disabled', false);
+                }
+                else
+                {
+                    myButton.prop('disabled', true);
+                }
+            },
+            ondblClickRow: editRow,
+            loadComplete: enableListen
+        });
+
+        $('#t_shiftsTable').append('<button class="ui-button ui-corner-all ui-widget my-toolbar-remove" disabled = true >删除</button>');
+
+        $('#myLayer .my-toolbar-remove').on('click', function ()
+        {
+            var selected = $("#shiftsTable").jqGrid('getGridParam','selarrrow');
+
+            $.post('/index/Circle/cirShiftsDel', {key: selected}, function (json) {
+                var res = $.parseJSON(json);
+                console.log(res);
+                $("#shiftsTable").jqGrid().trigger("reloadGrid");
+            }, 'json');
+        });
+
+        allShiftTable = $("#allShiftTable").jqGrid({
+            data: res.allShifts,
+            datatype: "local",
+            colModel: allShiftModel,
+            height: 300,
+            viewrecords: true, // show the current page, data rang and total records on the toolbar
+            shrinkToFit: false,
+            multiselect: true,
+            multiboxonly: true,
+            gridview: true,
+            scroll: true,
+            toolbar: [true, 'top'],
+            onSelectRow: function () {
+                selectedAS = $("#allShiftTable").jqGrid('getGridParam','selarrrow');
+                if(selectedAS.length > 0)
+                {
+                    $('#addToLeft').prop('disabled', false);
+                }
+                else
+                {
+                    $('#addToLeft').prop('disabled', true);
+                }
+            },
+            rowNum: res.allShifts.length,
+            caption: "所有班别",
+            pager: "#allShiftPager",
+            loadComplete: enableListen
+        });
+
+        $('#t_allShiftTable').append('<button id = "addToLeft" class="ui-button ui-corner-all ui-widget" disabled = true>添加到当前规则</button>');
+
+        $('#addToLeft').on('click', function () {
+            selectedAS = $("#allShiftTable").jqGrid('getGridParam','selarrrow');
+
+            $.post('/index/Circle/addShiftsToCircle', {circle: id, shiftIds: selectedAS}, function (json) {
+                var res = $.parseJSON(json);
+                $("#shiftsTable").jqGrid().trigger("reloadGrid");
+            }, 'json');
+        });
+        layerresize();
+    };
+
+    var layerresize = function () {
+        var width = $('#shiftsTableWrap').width();
+        $("#shiftsTable").jqGrid('setGridWidth', width);
+        width = $('#allShiftTableWrap').width();
+        $("#allShiftTable").jqGrid('setGridWidth', width);
+    };
+</script>

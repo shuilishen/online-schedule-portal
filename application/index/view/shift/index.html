@@ -3,13 +3,13 @@
         <div class="layui-card-header">管理班别</div>
         <div class="layui-card-body">
             <form class = "layui-form" action="" lay_filter = "component-form-element">
-
                 <div class = "layui-row layui-col-space10 layui-form-item">
                     <div class = "layui-col-log6 layui-col-md3">
-                        <label class = "layui-form-label">组织名称：</label>
+                        <label class = "layui-form-label">一级部门：</label>
                         <div class="layui-input-block">
-                            <select name="Org_id" id="Org_id" lay-filter="s1" >
-                                {volist name="org" id="vo"}
+                            <select id="first_org" lay-filter="s1" >
+                                <option value="">请选择</option>
+                                {volist name="first_org" id="vo"}
                                 <option value="{$vo.id}">{$vo.Org_N}</option>
                                 {/volist}
                             </select>
@@ -19,119 +19,56 @@
 
                 <div class = "layui-row layui-col-space10 layui-form-item">
                     <div class = "layui-col-log6 layui-col-md3">
-                        <label class = "layui-form-label">岗位名称：</label>
+                        <label class = "layui-form-label">二级部门：</label>
                         <div class="layui-input-block">
-                            <select name="PID" id="PID"  lay-filter="s2">
+                            <select id="second_org" lay-filter="s2" >
                             </select>
                         </div>
                     </div>
                 </div>
+
 
                 <div class = "layui-row layui-col-space10 layui-form-item">
                     <div class = "layui-col-log6 layui-col-md3">
-                        <label class = "layui-form-label">班别名称：</label>
+                        <label class = "layui-form-label">三级部门：</label>
                         <div class="layui-input-block">
-                            <select name="SID" id="SID"  lay-filter="s3">
+                            <select id="third_org" lay-filter="s3" >
                             </select>
                         </div>
                     </div>
-
-                    <div class = "layui-col-log6 layui-col-md3">
-                        <div class="area">
-                            <a type="button" class="layui-btn" href="/index/Shift/add">
-                                <i class="layui-icon">&#xe608;</i> 创建新的班别
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div class = "layui-form-item">
-
                 </div>
 
             </form>
-        </div>
-    </div>
 
-    <div class="layui-card">
-        <div class="layui-card-header">班别细节：</div>
-        <div class="layui-card-body">
-            <div class = "layui-row layui-col-space10">
-                <div class = "layui-col-log6 layui-col-md5">
-                    <table class="layui-table" lay-skin="nob">
-                        <colgroup>
-                            <col width="100">
-                            <col width="200">
-                            <col width="100">
-                            <col width="200">
-                        </colgroup>
-                        <tbody>
-                        <tr>
-                            <td>使用日历：</td>
-                            <td id="CA"></td>
-                        </tr>
-                        <tr>
-                            <td>班别代码：</td>
-                            <td id="SC"></td>
-                        </tr>
-                        <tr>
-                            <td>上班时间：</td>
-                            <td id="BT"></td>
-                            <td>下班时间：</td>
-                            <td id="ET"></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <label class = "layui-form-label">上班规则：</label>
-                <div class = "layui-col-log6 layui-col-md5">
-                    <table id="work" lay-filter="test" class = "layui-table"></table>
+            <div class="layui-card">
+                <div class="layui-card-header">班别列表：</div>
+                <div class="layui-card-body">
+                    <div class = "layui-row layui-col-space10">
+                        <div class = "layui-col-log6 layui-col-md6">
+                            <table id="shifts" lay-filter="test"></table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="layui-card">
-        <div class="layui-card-header">组织人员名单：</div>
-        <div class="layui-card-body">
-            <table id="memb" lay-filter="test"></table>
-        </div>
-    </div>
 </div>
 
+<script type="text/html" id="toolbar">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">获取选中行数据</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckLength">获取选中数目</button>
+        <button class="layui-btn layui-btn-sm" lay-event="isAll">验证是否全选</button>
+
+        <button class="layui-btn layui-btn-sm" data-title="添加班别信息" data-url="/index/Manageorg/add" lay-event="add">新增</button>
+        <button class="layui-btn layui-btn-sm" lay-event="edit">编辑</button>
+        <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</button>
+    </div>
+</script>
+
 <script>
-    var org2={
-      xz:[
-          {key:'ch',value:'策划'},
-          {key:'zb',value:'值班'}
-      ],
-      js:[
-          {key:'bj',value:'编辑'},
-          {key:'zg',value:'主管'}
-      ]
-    };
-    var org3={
-        ch:[
-            {key:'zb1',value:'早班1'},
-            {key:'mb1',value:'中班1'},
-            {key:'wb1',value:'晚班1'}
-        ],
-        zb:[
-            {key:'zb2',value:'早班2'},
-            {key:'mb2',value:'中班2'},
-            {key:'wb2',value:'晚班2'}
-        ],
-        bj:[
-            {key:'zb3',value:'早班3'},
-            {key:'mb3',value:'中班3'},
-            {key:'wb3',value:'晚班3'}
-        ],
-        zg:[
-            {key:'zb4',value:'早班4'},
-            {key:'mb4',value:'中班4'},
-            {key:'wb4',value:'晚班4'}
-        ]
-    };
+
 
     var pagejs = function() {
         layui.form.on('select(s1)',function (data) {
@@ -180,6 +117,24 @@
                 layui.$('#work').html(res.wtable);
 
             },'json');
+        });
+
+        var table = layui.table;
+        table.render({
+            elem: '#shifts'
+            ,height: 300
+            ,toolbar: '#toolbar'
+            ,page: true //开启分页
+            ,cols: [[ //表头
+                {type:'checkbox'}
+                ,{field: 'SC', title: '班别代码',  sort: true}
+                ,{field: 'SN', title: '班别名称', sort: true}
+                ,{field: 'Time', title: '上班时间', sort:  true}
+                ,{field: 'Duration', title: '工时', sort:  true}
+                ,{field: 'Org_id', title: '所属组织',  sort: true}
+                ,{fixed: 'right', title:'操作', toolbar: '#bar'}
+            ]],
+            data: [[]]
         });
 
     };

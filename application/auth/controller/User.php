@@ -26,72 +26,124 @@ class User extends myCommonController
      */
     public function index(){
 
+        $list = array();
         $groups=Groups::select();
-        $arr=array();
-        foreach ($groups as $g){
-            $arr[]=sprintf('%s:"%s"',$g['id'],$g['title']);
+        foreach ($groups as $group)
+        {
+            $list[$group['id']] = $group['title'];
         }
-        $this->assign('gpstr',implode(',',$arr));
-
+        $this->assign('groups', json_encode($list));
         return $this->fetch();
     }
 
-    /**
-     * @name    列表
-     * @return array
-     *
-     */
-    public function listdata(){
-        $users=Users::select();
-        if($users && count($users)>0)
-            return ['code'=>0,'msg'=>'','count'=>count($users),'data'=>$users];
-        else
-            return ['code'=>301,'msg'=>'没有数据','count'=>0,'data'=>[]];
+    public function getUserData()
+    {
+        return Users::order('id', 'ASC')->select();
     }
 
-    /**
-     * @name    添加
-     * @return mixed
-     * @throws \think\db\exception\DataNotFoundException
-     * @throws \think\db\exception\ModelNotFoundException
-     * @throws \think\exception\DbException
-     */
-    public function add(){
-        $org1 = Groups::order('id ASC')->select();
-        $this->assign('org1',$org1);
+    public function editAndAdd()
+    {
+        $state = [
+            'code' => 1,        //1 success, 0 failure
+            'msg' => '更新成功',
+            'url' => '/index/User/editAndAdd',
+            'errorID' => null
+        ];
 
-        if($this->request->isPost()){
-            $EID=$this->request->post('Emp_id','');
-            $email=$this->request->post('email','');
-            $password=$this->request->post('password','');
+        $userId=$this->request->param('id',0,'intval');
 
-            $auid=$this->request->post('Aut_id','');
+        $data = Users::find($userId);
 
-            if(strlen($EID)!=6)
-                $this->error('工号长度错误！');
-            $check=Users::where('Emp_id',$EID)->find();
-            if($check)
-                $this->error('工号已存在');
-            else{
-                $user = new Users;
+        if($data)
+        {
+            $data->eid=input('post.eid');     //question here  difference between input('post.xxx') and $this->request->post('', '')
+            $data->email=input('post.email');
+            $data->name=input('post.name');
+            $data->pwd=input('post.pwd');
+            $data->auid=input('post.auid');
+            $data->mid=input('post.mid');
 
-                $user->Emp_id=$EID;
-                $user->email=$email;
-                $user->password=$password;
+            $opt = $data->save();
 
-                $user->Aut_id=$auid;
-
-                $opt=$user->save();
-                if($opt)
-                    $this->success('新增成功！','/auth/User/index');
-                else
-                    $this->error('新增失败！');
+            if(!$opt)
+            {
+                $state['code'] = 0;
+                $state['msg'] = '更新失败';
             }
-
-        }else{
-            return $this->fetch();
         }
+        else
+        {
+            $state['msg'] = '添加成功！';
+
+            $eid=$this->request->post('eid','');
+            $email=$this->request->post('email','');
+            $name=$this->request->post('name','');
+            $pwd=$this->request->post('pwd','');
+            $auid=$this->request->post('auid','');
+            $mid=$this->request->post('mid','');
+
+            $user = new Users;
+            $user->eid = $eid;
+            $user->email = $email;
+            $user->name = $name;
+            $user->pwd = $pwd;
+            $user->auid = $auid;
+            $user->mid = $mid;
+
+            $opt=$user->save();
+            if(!$opt)
+            {
+                $state['code'] = 0;
+                $state['msg'] = '添加失败！';
+            }
+        }
+        return json_encode($state);
     }
+
+
+//    /**
+//     * @name    添加
+//     * @return mixed
+//     * @throws \think\db\exception\DataNotFoundException
+//     * @throws \think\db\exception\ModelNotFoundException
+//     * @throws \think\exception\DbException
+//     */
+//    public function add(){
+//        $org1 = Groups::order('id ASC')->select();
+//        $this->assign('org1',$org1);
+//
+//        if($this->request->isPost()){
+//            $EID=$this->request->post('eid','');
+//            $email=$this->request->post('email','');
+//            $password=$this->request->post('pwd','');
+//
+//            $auid=$this->request->post('auid','');
+//
+//            if(strlen($EID)!=6)
+//                $this->error('工号长度错误！');
+//            $check=Users::where('eid', $EID)->find();
+//            if($check)
+//                $this->error('工号已存在');
+//            else{
+//                $user = new Users;
+//
+//                $user->Emp_id=$EID;
+//                $user->email=$email;
+//                $user->password=$password;
+//
+//                $user->Aut_id=$auid;
+//
+//                $opt=$user->save();
+//                if($opt)
+//                    $this->success('新增成功！','/auth/User/index');
+//                else
+//                    $this->error('新增失败！');
+//            }
+//
+//        }else{
+//            return $this->fetch();
+//        }
+//    }
 
     /**
      * @name    编辑

@@ -10,11 +10,15 @@ namespace app\paiban\controller;
 
 use app\auth\model\Users;
 use app\common\controller\myCommonController;
+use app\index\model\Circles;
 use app\index\model\Members;
 use app\index\model\Orgs;
-use app\index\model\Positions;
 use app\index\model\Shifts;
 use app\paiban\model\Paiban;
+use think\Db;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class Index extends myCommonController
 {
@@ -29,267 +33,386 @@ class Index extends myCommonController
      */
     public function index()
     {
-        $EID = session('uid');
-        $user = Users::where('EID', $EID)->find();
+//        $EID = session('uid');
+//        $user = Users::where('EID', $EID)->find();
 
-        $positions = Positions::where('Org_id', $user['Man_Org_id'])->select();
-        $defaultPosition = Positions::where('Org_id', $user['Man_Org_id'])->find();
-        $this->assign('default_PID', $defaultPosition['id']);
-        $this->assign('positions', $positions);
-        $this->getTable($defaultPosition['id']);
+        $members = Members::select();
+        $memData = array();
+        foreach ($members as $member) {
+            $memData[$member['id']] = [
+                'name' => $member['name']
+            ];
+        }
+        $this->assign('members', json_encode($memData));
+
+        $org1 = $this->getSelections(1);
+        $this->assign('org1', json_encode($org1));
 
         return $this->fetch();
     }
 
+    public function getSelections($key)
+    {
+        $orgs = Orgs::order('id', 'ASC')->where('parent_id', $key)->select();
+
+        $selections = '<option value="">请选择</option>';
+        foreach ($orgs as $org) {
+            $selections .= '<option value='.$org['id'].'>'.$org['Org_N'].'</option>';
+        }
+        return $selections;
+    }
+
+    public function getCircleArray($circleId)
+    {
+        $circle = Circles::get($circleId);
+        $check = false;
+        if($circle['type'] == 1)
+            $check = true;
+        $shifts = Db::table('data_cdetail')->where('cid', $circleId)->order('order', 'ASC')->select();
+
+        $arr = array();
+        foreach ($shifts as $shift) {
+            $arr[] = $shift['sid'];
+        }
+
+        $data = [
+            'circle' => $arr,
+            'special' => $check
+        ];
+        return json_encode($data);
+    }
+
+
+    public function getSelectionAndTables($key, $YM)
+    {
+        $orgs = Orgs::order('id', 'ASC')->where('parent_id', $key)->select();
+        $selections = array();
+        $selections[] = '<option value="">请选择</option>';
+        foreach ($orgs as $org) {
+            $selections[] = '<option value='.$org['id'].'>'.$org['Org_N'].'</option>';
+        }
+
+        $tableData = $this->getTables($key, $YM);
+
+        $circles = Circles::where('Org_id', $key)->order('id', 'ASC')->select();
+
+        $radios = array();
+        $radios[] = '<input type="radio" name = "circle" value = 0 title="普通" checked>';
+        foreach ($circles as $circle)
+        {
+            $radios[] = '<input type="radio" name = "circle" value='.$circle['id'].' title="'.$circle['title'].'">';
+        }
+
+        $data = [
+            'circle' => $radios,
+            'org' => $selections
+        ];
+
+        return json_encode(array_merge($data, $tableData));
+    }
+
+    public function getTables($key, $YM)
+    {
+        $colModel = array();
+        $colModel[] = [
+            'label' => '日期',
+            'name' => 'date',
+            'width' => 100,
+            'align' => 'center',
+            'frozen' => 'truth'
+        ];
+        $colModel[] = [
+            'label' => '星期',
+            'name' => 'weekDay',
+            'width' => 70,
+            'align' => 'center',
+            'frozen' => 'truth'
+        ];
+        $shiftIds = Db::table('data_oshifts')->where('Org_id', $key)->order('order', 'ASC')->select();
+
+        $firstC = null;
+        foreach ($shiftIds as $i => $sid) {
+            if($i == 0)
+                $firstC = $sid['sid'];
+            $shift = Shifts::get($sid['sid']);
+            $colModel[] = [
+                'label' => $shift['SN'],
+                'name' => $sid['sid'],
+                'align' => 'center',
+                'formatter' => 'memberFormatter',
+                'cellattr' => 'addMyClassToCell'
+            ];
+        }
+
+        $org = Orgs::get($key);
+        $groupHeaders = [
+            'numberOfColumns' => count($shiftIds),
+            'titleText' => $org['Org_N'],
+            'startColumnName' => $firstC
+        ];
+
+        $workflowData = $this->getWorkflowData($key, $YM);
+        $memListData = $this->getMemListData($key, $YM);
+
+        $data = [
+            'data' => $workflowData,
+            'memListData' => $memListData,
+            'colModel' => $colModel,
+            'groupHeaders' => $groupHeaders
+        ];
+
+        return $data;
+    }
+
     /**
-     * @name    表格
-     * @param $Pos_id
-     * @throws \Exception
+     * @param $key
+     * @param $YM
+     * @return array|\PDOStatement|string|\think\Collection
      * @throws \think\db\exception\DataNotFoundException
      * @throws \think\db\exception\ModelNotFoundException
      * @throws \think\exception\DbException
-     *
      */
-    public function getTable($Pos_id)
-    {
-        $position = Positions::get($Pos_id);
-        $Org = Orgs::get($position['Org_id']);
+    public function getMemListData($key, $YM){
+        $members = Members::where('oid', $key)->order('id', 'ASC')->select();
 
-        $shifts = Shifts::where('Pos_id', $Pos_id)->select();
-
-        $nextmonth = strtotime('first day of next month');
-
-        $firstDayNM = date("Y-m-d", $nextmonth);
-        $check = Paiban::where('date', $firstDayNM)->find();
-
-        $paibanData = array();
-        if(!$check)
-        {
-            // no data, initialize
-            $startdate = $nextmonth;
-            $enddate = strtotime('+1 month', $nextmonth);
-
-            while ($startdate < $enddate) {
-                foreach($shifts as $shift)
-                {
-                    $paibanData[] = [
-                        'date' => date("Y-m-d", $startdate),
-                        'Org_id' => $Org['id'],
-                        'Pos_id' => $Pos_id,
-                        'Shi_id' => $shift['id'],
-                        'Mem_id' => ''
-                    ];
-                }
-                $startdate = strtotime("+1 day", $startdate);
-            }
-            $paiban = new Paiban;
-            $paiban->saveAll($paibanData);
-        }
-
-        $this->readPData($Pos_id);
-    }
-
-    private function readPData($Pos_id)
-    {
-        $paibanData = Paiban::where('Pos_id', $Pos_id)->select();
-        $Shifts = Shifts::where('Pos_id', $Pos_id)->select();
-
-        $Position = Positions::get($Pos_id);
-        $Org = Orgs::get($Position['Org_id']);
-
-        $tableHead = array();
-        $tableData = array();
-
-        $wday = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        $nextmonth = strtotime('first day of next month');
-
+        $nextmonth = strtotime($YM);
         $startdate = $nextmonth;
         $enddate = strtotime('+1 month', $nextmonth);
 
-        $cols = 0;
-        $i = 0;
-        $NumEOfShifts = 0;
+        foreach ($members as $i => $member)
+        {
+            $workflowOfMem = Paiban::where('date', '>=', date("Y-m-d", $startdate))
+                ->where('date', '<', date("Y-m-d", $enddate))
+                ->where('Mem_id', $member['id'])->where('Shi_id','<>', '45')->order('date', 'ASC')->select();
 
-        $tableHead[0][0] = "{field:'date', title:'日期', rowspan: 2, width:50, align: 'center'}";
-        $tableHead[0][1] = "{field:'weekDay', title:'星期', rowspan: 2, width:50, align: 'center'}";
-        $tableHead[0][2] = "{field:'org', title:'组织', rowspan: 2, width:50, align: 'center'}";
+            $members[$i]['days']=count($workflowOfMem);
+        }
 
+        return $members;
+    }
 
-        while ($startdate < $enddate) {
+    /**
+     * @param $key
+     * @return array|\PDOStatement|string|\think\Collection
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function getWorkflowData($key, $YM)
+    {
+        $wday = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
+        $nextmonth = strtotime($YM);
+        $startdate = $nextmonth;
+        $enddate = strtotime('+1 month', $nextmonth);
+
+        $shiftIds = Db::table('data_oshifts')->where('Org_id', $key)->order('order', 'ASC')->select();
+
+        $index = 0;
+        $tableData = array();
+        while ($startdate < $enddate)
+        {
             $dateIndex = getdate($startdate);
-            $tableData[$i][] = "date: '".date("Y-m-d", $startdate)."'";
-            $tableData[$i][] = "weekDay: '".$wday[$dateIndex['wday']]."'";
-            $tableData[$i][] = "org: '".$Org['Org_N']."'";
 
+            $tableData[$index] = [
+                'date' => date("Y-m-d", $startdate),
+                'weekDay' => $wday[$dateIndex['wday']]
+            ];
 
-            foreach ($Shifts as $key=>$Shift) {
+            foreach ($shiftIds as $i => $sid) {     //problem here
+                $memId = Db::table('app_paiban')
+                    ->where('Org_id', $key)->where('date', date("Y-m-d", $startdate))
+                    ->where('Shi_id', $sid['sid'])->field('Mem_id')->select();
 
-                $EmployeeOfShift = Paiban::where('date', date("Y-m-d", $startdate))->where('Shi_id', $Shift['id'])->select();
-                $NumEOfShifts += count($EmployeeOfShift);
-                foreach ($EmployeeOfShift as $key2=>$value)
-                {
-                    $tableHead[1][$key+$key2] = "{field:'EID".($key+$key2)."', title:'".$Shift['SN']."<a href=\'javascript:;\' class=\'l-btn l-btn-small l-btn-plain\' group=\'\' id=\'\'><span class=\'l-btn-left l-btn-icon-left\'><span class=\'l-btn-text\'>Add</span><span class=\'l-btn-icon icon-add\'>&nbsp;</span></span></a>', align: 'center', width: 100}";
+                $arr = array_column($memId, 'Mem_id');
 
-
-                    $Member = Members::get($value['Mem_id']);
-
-                    $tableData[$i][] = "EID".($key+$key2).": '".$Member['name']."'";
-                }
+                $tableData[$index][$sid['sid']] = $arr;
             }
-            if($NumEOfShifts > $cols)
-                $cols = $NumEOfShifts;
-            $NumEOfShifts = 0;
-
-
-            $tableData[$i] = '{'.implode(',',$tableData[$i]).'}';
+            $index++;
             $startdate = strtotime("+1 day", $startdate);
-            $i++;
+        }
+        return $tableData;
+    }
+
+    public function targetTablePage()
+    {
+        return $this->fetch('targetTablePage');
+    }
+
+    /**
+     * @param $YM
+     * @return string
+     * @throws \think\db\exception\DataNotFoundException
+     * @throws \think\db\exception\ModelNotFoundException
+     * @throws \think\exception\DbException
+     */
+    public function getTargetTableData($YM)
+    {
+        $wday = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        $startdate = strtotime($YM);
+        $enddate = strtotime('+1 month', $startdate);
+
+        $colModel = array();
+        $colNames = array();
+        $groupHeaders = array();
+        $shiftData = array();
+
+        $colModel[] = [
+            'label' => 'Org_C',
+            'name' => 'Org_C',
+            'align' => 'center',
+            'formatter' => ''
+        ];
+
+        $colModel[] = [
+            'label' => 'Org_N',
+            'name' => 'Org_N',
+            'align' => 'center',
+            'formatter' => ''
+        ];
+
+        $colModel[] = [
+            'label' => 'eid',
+            'name' => 'eid',
+            'align' => 'center',
+            'formatter' => ''
+        ];
+
+        $colModel[] = [
+            'label' => 'name',
+            'name' => 'name',
+            'align' => 'center',
+            'formatter' => ''
+        ];
+
+        $colNames[] = '组织代码(Organization Code)';
+
+        $colNames[] = '组织名称(Organization Name)';
+
+        $colNames[] = '工号(Employee ID)';
+
+        $colNames[] = '姓名(Name)';
+
+        while ($startdate < $enddate)
+        {
+            $colModel[] = [
+                'label' => 'date',
+                'name' => date("Y-m-d", $startdate),
+                'align' => 'center',
+                'formatter' => ''
+            ];
+
+            $groupHeaders[] = [
+                'numberOfColumns' => 1,
+                'titleText' => date("Y-m-d ", $startdate).$wday[date('w', $startdate)],    //DATE()
+                'startColumnName' => date("Y-m-d", $startdate)
+            ];
+
+            $colNames[] = '班别代码(Shift Code)';
+            $startdate = strtotime("+1 day", $startdate);
         }
 
 
-        $tableHead[0][3] = "{title:'".$Position['PN']."', colspan: ".$cols.", width:100}";
+        $members = Members::order('oid', 'ASC')->select();
+        $index = 0;
+        foreach ($members as $member) {
+            $startdate = strtotime($YM);
 
-        $tableHead[0] = '['.implode(',', $tableHead[0]).']';
-        $tableHead[1] = '['.implode(',', $tableHead[1]).']';
+            $check = Paiban::where('date', '>=', date("Y-m-d", $startdate))
+                ->where('date', '<', date("Y-m-d", $enddate))
+                ->where('Mem_id', $member['id'])->order('date', 'ASC')->find();
 
-        $tableData = '['.implode(',', $tableData).']';
-        $tableHead = '['.implode(',', $tableHead).']';
+            if($check)
+            {
+                $workflowOfMem = Paiban::where('date', '>=', date("Y-m-d", $startdate))
+                    ->where('date', '<', date("Y-m-d", $enddate))
+                    ->where('Mem_id', $member['id'])->order('date', 'ASC')->select();
 
+                $wListOfMem = array();
+                foreach ($workflowOfMem as $item) {
+                    $shift = Shifts::get($item['Shi_id']);
+                    $wListOfMem[$item['date']] = $shift['SC'];
+                }
 
-        $this->assign('tableHead', $tableHead);
-        $this->assign('tableData', $tableData);
+                $org = Orgs::get($member['oid']);
+
+                $shiftData[$index]['Org_C'] = $org['Org_C'];
+                $shiftData[$index]['Org_N'] = $org['Org_N'];
+                $shiftData[$index]['eid'] = $member['eid'];
+                $shiftData[$index]['name'] = $member['name'];
+
+                $startdate = strtotime($YM);
+                while ($startdate < $enddate)
+                {
+                    $dateString = date("Y-m-d", $startdate);
+
+                    if(array_key_exists($dateString, $wListOfMem))
+                        $shiftData[$index][$dateString] = $wListOfMem[$dateString];
+                    else
+                        $shiftData[$index][$dateString] = 'OFF';
+                    $startdate = strtotime("+1 day", $startdate);
+                }
+                $index++;
+            }
+        }
+
+        $data = [
+            'data' => $shiftData,
+            'colModel' => $colModel,
+            'colNames' => $colNames,
+            'groupHeaders' => $groupHeaders
+        ];
+
+        return json_encode($data);
     }
 
+    /**
+     * @param $YM
+     * @param $org
+     * @throws \think\Exception
+     * @throws \think\exception\PDOException
+     */
+    public function deleteAll($YM, $org)
+    {
+        $startdate = strtotime($YM);
+        $enddate = strtotime('+1 month', $startdate);
 
-//                $temp = getdate($startdate);
+        Paiban::where('Org_id', $org)->where('date', '>=', date("Y-m-d", $startdate))
+            ->where('date', '<', date("Y-m-d", $enddate))->delete();
+    }
 
+    /**
+     * @param $data
+     * @param $org
+     * @throws \Exception
+     */
+    public function saveWorkflowData($data, $org)
+    {
+        $this->deleteAll($data[0]['date'], $org);
 
-//                $newData[] = [
-//                    'date' => date("Y-m-d", $startdate),
-//                    'weekDay' => $wday[$temp['wday']],
-//                    'Org_N' => $Org['Org_N']
-//                ];
-
-//            $startdate = strtotime('+20 days', $thismonth);
-//            $enddate = $nextmonth;
-//
-//
-//            //check if previous data exist
-//            if(false)
-//            {
-//                //exist
-//                while ($startdate < $enddate) {
-//                    $temp = getdate($startdate);
-//                    $preData[] = [
-//                        'date' => date("Y-m-d", $startdate),
-//                        'weekDay' => $wday[$temp['wday']],
-//                        'Org_N' => $Org['Org_N']
-//                    ];
-//
-//                    $startdate = strtotime("+1 day", $startdate);
-//                }
-//            }
-
-//
-//        $thismonth = strtotime('first day of this month');
-//        $nextmonth = strtotime('first day of next month');
-//        $startdate = strtotime('+20 days', $thismonth);
-//        $enddate = strtotime('+2 month', $thismonth);
-//
-//        $firstDayNM = date("Y-m-d", $nextmonth);
-//        $check = Paiban::where('date', $firstDayNM)->find();
-//
-//
-//        $dates = array();
-//
-//
-//        while ($startdate < $enddate) {
-//            $displayDates[] = date("Y-m-d", $startdate);
-//            $dates[] = date("Y-m-d", $startdate);
-//
-//            $temp = getdate($startdate);
-//            $weekDay[] = $wday[$temp['wday']];
-//
-//            $startdate = strtotime("+1 day", $startdate);
-//        }
-//
-//        if(!$check)
-//        {
-//            //create data for this month
-//
-//
-//            $newlist = array();
-//            $startdate = strtotime($nextmonth);
-//            $enddate = strtotime('+1 month', $nextmonth);
-//            while ($startdate < $enddate) {
-//                $newlist[]['date'] = date("Y-m-d", $startdate);
-//                $newlist[]['Org_id']
-//            }
-//
-//
-//
-//
-//        }
-//        else
-//        {
-//            //load data
-//            myHalt($check);
-//        }
-//        // assign variables
-//
-//
-//        $org = Orgs::where('id', $user['Org_id'])->find();
-//
-//        $org_members = Members::where('Org_id', $user['Org_id'])->select();
-//
-//        $positions = Positions::where('Org_id', $user['Org_id'])->select();
-//
-//        $shifts = array();
-//        foreach ($positions as $key=>$position) {
-//            $shifts[$position['PN']] = Shifts::where('Pos_id', $position['id'])->select();
-//            $positions[$key]['shiftCount'] = sizeof($shifts[$position['PN']]);
-//
-//        }
-//
-//        $thismonth = strtotime('first day of this month');
-//        $startdate = strtotime('+20 days', $thismonth);
-//        $enddate = strtotime('+2 month', $thismonth);
-//
-//        $dates = array();
-//        $week = array();
-//        $wday = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
-//        while ($startdate < $enddate) {
-//            $dates[] = date("Y-m-d", $startdate);
-//            $temp = getdate($startdate);
-//            $week[] = $wday[$temp['wday']];
-//            $startdate = strtotime("+1 day", $startdate);
-//        }
-//
-//        $fixedInfo = array();
-//        $draggableInfo = array();
-//        foreach ($dates as $key=>$date) {
-//            $fixedInfo[$key]['date'] = $date;
-//            $fixedInfo[$key]['week'] = $week[$key];
-//            $fixedInfo[$key]['Org_N'] = $org['Org_N'];
-//
-//            foreach ($shifts as $key2=>$shift)
-//            {
-//                foreach ($shift as $key3=>$s){
-//                    $draggableInfo[$key][] = '';
-//                }
-//
-//            }
-//        }
-//
-//
-//
-//        $this->assign('shifts', $shifts);
-//        $this->assign('shifts2', str_replace("\\r\\n","",json_encode($shifts)));
-//        $this->assign('fixedInfo', $fixedInfo);
-//        $this->assign('draggableInfo',$draggableInfo);
-//
-//        return $this->fetch();
-
-
+        $workflow = new Paiban;
+        $saveList = array();
+        foreach ($data as $rowData)
+        {
+            $date = $rowData['date'];
+            foreach ($rowData as $key => $cellData)
+            {
+                if($key !== 'weekDay' && $key !== 'date')
+                {
+                    $sid = $key;
+                    foreach ($cellData as $memId)
+                    {
+                        $saveList[] = [
+                            'date' => $date,
+                            'Org_id' => $org,
+                            'Shi_id' => $sid,
+                            'Mem_id' => $memId
+                        ];
+                    }
+                }
+            }
+        }
+        $workflow->saveAll($saveList);
+        exit;
+    }
 }
