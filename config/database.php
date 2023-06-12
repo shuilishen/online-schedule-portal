@@ -15,13 +15,13 @@ return [
     // 服务器地址
     'hostname'        => '127.0.0.1',
     // 数据库名
-    'database'        => 'paiban_cctvnc_cn',
+    'database'        => '',
     // 用户名
-    'username'        => 'paiban_cctvnc_cn',
+    'username'        => '',
     // 密码
-    'password'        => '6zGemLCRJMMydnPh',
+    'password'        => '',
     // 端口
-    'hostport'        => '3306',
+    'hostport'        => '',
     // 连接dsn
     'dsn'             => '',
     // 数据库连接参数
@@ -65,15 +65,15 @@ return [
 
         'type' => 'sqlsrv',
 
-        'hostname' => '172.25.7.5',
+        'hostname' => '',
 
         'database' => 'ehr',
 
         'username' => 'nc_api',
 
-        'password' => 'K1EA1JHJxJRVO6u57NpH',
+        'password' => '',
 
-        'hostport' => '1433',
+        'hostport' => '',
 
         'charset' => 'utf8',
 
